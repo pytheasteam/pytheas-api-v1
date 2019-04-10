@@ -45,3 +45,9 @@ def attractions():
         return make_response(response)
     response = db_manager.get_attractions()
     return make_response(response)
+
+
+@app.route('/migrate_data', methods=['POST'])
+def migrate_data():
+    resp = db_manager.migrate_data()
+    return make_response(resp)

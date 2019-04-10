@@ -1,5 +1,4 @@
 from .. import db
-from .tag import tags
 
 
 class Attraction(db.Model):
@@ -61,7 +60,7 @@ class Attraction(db.Model):
 
     city_id = db.Column(
         db.Integer,
-        db.ForeignKey('city.id'),
+        db.ForeignKey('cities.id'),
         nullable=False
     )
     city = db.relationship(
@@ -69,8 +68,7 @@ class Attraction(db.Model):
         backref=db.backref('attractions', lazy=True)
     )
 
-    tags = db.relationship('Tag', secondary=tags, lazy='subquery',
-                           backref=db.backref('attractions', lazy=True))
+    tags = db.relationship('Tag', secondary='attractions_tags')
 
     def __repr__(self):
         return '<Attraction {}>'.format(self.name)
