@@ -127,4 +127,5 @@ config/
 
 # other
 .idea/
+api_venv/
 pytheas_venv/
