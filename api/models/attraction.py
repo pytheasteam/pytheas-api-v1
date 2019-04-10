@@ -59,7 +59,7 @@ class Attraction(db.Model):
         nullable=True
     )
 
-    city_name = db.Column(
+    city_id = db.Column(
         db.Integer,
         db.ForeignKey('city.id'),
         nullable=False

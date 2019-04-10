@@ -19,9 +19,9 @@ class Tag(db.Model):
         return '<Tag {}>'.format(self.name)
 
 
-#
-# tags = db.Table(
-#     'tags',
-#     db.Column('tag_id', db.Integer, db.ForeignKey('tag.id'), primary_key=True),
-#     db.Column('attraction_id', db.Integer, db.ForeignKey('attractions.id'), primary_key=True)
-# )
+
+tags = db.Table(
+    'tags',
+    db.Column('tag_id', db.Integer, db.ForeignKey('tag.id'), primary_key=True),
+    db.Column('attraction_id', db.Integer, db.ForeignKey('attractions.id'), primary_key=True)
+)
