@@ -1,9 +1,6 @@
 from datetime import datetime as dt
 from errno import errorcode
-
-import mysql.connector
 from flask import jsonify
-
 from api.models.user_trip_profile import UserProfile, ProfileTag
 from config.db import migration_db
 from api.models.attraction import Attraction
@@ -171,37 +168,7 @@ class DBManager:
             return "success", 200
 
     def migrate_data(self):
-        try:
-            db_client = mysql.connector.connect(
-                host=migration_db.HOST,
-                database=migration_db.DATABASE_NAME,
-                user=migration_db.USERNAME,
-                password=migration_db.PASSWORD
-            )
-            cursor = db_client.cursor()
-
-        except mysql.connector.Error as err:
-            if err.errno == errorcode.ER_ACCESS_DENIED_ERROR:
-                print("Bad username or password")
-            elif err.errno == errorcode.ER_BAD_DB_ERROR:
-                print("Database does not exist")
-            else:
-                print(err)
-        else:
-            print("Migrate tag attr")
-            x = TagAttraction.query.delete()
-            print(f'delete {x} rows' )
-            query = "SELECT * FROM pytheas.api_attraction_tags;"
-            cursor.execute(query)
-            res = cursor.fetchall()
-            print(len(res))
-            for attag in res:
-                try:
-                    print(attag)
-                    self.add_to_attr_tags(attag[1], attag[2])
-                except:
-                    pass
-        return '200'
+        pass
 
     def get_explore_trips(self, city, username, profile, days):
         try:
