@@ -47,7 +47,27 @@ def attractions():
     return make_response(response)
 
 
-@app.route('/migrate_data', methods=['POST'])
-def migrate_data():
-    resp = db_manager.migrate_data()
-    return make_response(resp)
+@app.route('/api/profile', methods=['POST'])
+def profiles():
+    if request.method == 'POST':
+        body = json.loads(request.data)
+        response = db_manager.create_profile(
+            username=body.get('username'),
+            profile_name=body.get('name'),
+            tags=body.get('tags')
+        )
+        return make_response(response)
+    response = db_manager.get_attractions()
+    return make_response(response)
+
+
+@app.route('/api/explore', methods=['get'])
+def explore():
+    city = 'paris'
+    response = db_manager.get_explore_trips(
+        city=city,
+        username='userTest',
+        profile='art',
+        days=7
+    )
+    return make_response(response)

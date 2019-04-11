@@ -3,6 +3,8 @@ from errno import errorcode
 
 import mysql.connector
 from flask import jsonify
+
+from api.models.user_trip_profile import UserProfile, ProfileTag
 from config.db import migration_db
 from api.models.attraction import Attraction
 from api.models.city import City
@@ -39,17 +41,17 @@ class DBManager:
         except:
             return "Error", 500
 
-    # def create_tag(self, tag_name, tag_id=None):
-    #     try:
-    #         new_tag = Tag(
-    #             id=tag_id,
-    #             name=tag_name
-    #         )
-    #         db.session.add(new_tag)
-    #         db.session.commit()
-    #         return new_tag, 200
-    #     except:
-    #         return "Error", 500
+    def create_tag(self, tag_name, tag_id=None):
+        try:
+            new_tag = Tag(
+                id=tag_id,
+                name=tag_name
+            )
+            db.session.add(new_tag)
+            db.session.commit()
+            return new_tag, 200
+        except:
+            return "Error", 500
 
     def get_tags(self):
         try:
@@ -62,34 +64,34 @@ class DBManager:
         except:
             return "Error", 500
 
-    # def create_attraction(self,
-    #                       name,
-    #                       rate,
-    #                       address,
-    #                       price,
-    #                       description,
-    #                       phone,
-    #                       website,
-    #                       city_id,
-    #                       attraction_id=None):
-    #
-    #     try:
-    #         new_attraction = Attraction(
-    #             id=attraction_id,
-    #             name=name,
-    #             rate=rate,
-    #             address=address,
-    #             price=price,
-    #             description=description,
-    #             phone_number=phone,
-    #             website=website,
-    #             city_id=city_id
-    #         )
-    #         db.session.add(new_attraction)
-    #         db.session.commit()
-    #         return new_attraction, 200
-    #     except Exception as e:
-    #         return e, 500
+    def create_attraction(self,
+                          name,
+                          rate,
+                          address,
+                          price,
+                          description,
+                          phone,
+                          website,
+                          city_id,
+                          attraction_id=None):
+
+        try:
+            new_attraction = Attraction(
+                id=attraction_id,
+                name=name,
+                rate=rate,
+                address=address,
+                price=price,
+                description=description,
+                phone_number=phone,
+                website=website,
+                city_id=city_id
+            )
+            db.session.add(new_attraction)
+            db.session.commit()
+            return new_attraction, 200
+        except Exception as e:
+            return e, 500
 
     def get_attractions(self, **kwargs):
         if kwargs:
@@ -116,18 +118,18 @@ class DBManager:
         except:
             return "Error", 500
 
-    # def create_city(self, name, country, city_id=None):
-    #     try:
-    #         new_city = City(
-    #             name=name,
-    #             country=country,
-    #             id=city_id
-    #         )
-    #         db.session.add(new_city)
-    #         db.session.commit()
-    #         return new_city, 200
-    #     except:
-    #         return "Error", 500
+    def create_city(self, name, country, city_id=None):
+        try:
+            new_city = City(
+                name=name,
+                country=country,
+                id=city_id
+            )
+            db.session.add(new_city)
+            db.session.commit()
+            return new_city, 200
+        except:
+            return "Error", 500
 
 
     def add_to_attr_tags(self, att_id, tag_id):
@@ -139,6 +141,34 @@ class DBManager:
         except Exception as e:
             db.session.rollback()
             return "Error", 500
+
+    def create_profile(self, username, profile_name, tags):
+
+        try:
+            # get tags id from name
+            user = User.query.filter_by(username=username).first()
+            # create new profile
+            new_profile = UserProfile(
+                user_id=user.id,
+                name=profile_name
+            )
+            db.session.add(new_profile)
+            db.session.commit()
+            # create tags
+            for tag in tags:
+                db_tag = Tag.query.filter_by(name=tag).first()
+                new_profile_tag = ProfileTag(
+                    tag_id=db_tag.id,
+                    profile_id=new_profile.id
+                )
+                db.session.add(new_profile_tag)
+                db.session.commit()
+        except Exception as e:
+            print(e)
+            db.session.rollback()
+            return "Error", 500
+        else:
+            return "success", 200
 
     def migrate_data(self):
         try:
@@ -172,4 +202,50 @@ class DBManager:
                 except:
                     pass
         return '200'
+
+    def get_explore_trips(self, city, username, profile, days):
+        try:
+            user_id = User.query.filter_by(username=username).first().id
+            profile_id = UserProfile.query.filter_by(user_id=user_id, name=profile).first().id
+            city_id = City.query.filter_by(name=city).first().id
+            tags_id = [tag.tag_id for tag in ProfileTag.query.filter_by(profile_id=profile_id)]
+            attractions = Attraction.query.filter_by(city_id=city_id)
+            choosen_attractions = []
+            for attraction in attractions:
+                try:
+                    at_tag = TagAttraction.query.filter_by(attraction_id=attraction.id)
+                except:
+                    pass
+                else:
+                    try:
+                        attraction_tags = [
+                            tag.tag_id for tag in at_tag
+                        ]
+                        if list(set(tags_id) & set(attraction_tags)):
+                            choosen_attractions.append({
+                                'id': attraction.id,
+                                'name': attraction.name,
+                                'rate': attraction.rate,
+                                'address': attraction.address,
+                                'price': attraction.price,
+                                'description': attraction.description,
+                                'phone number': attraction.phone_number,
+                                'website': attraction.website,
+                                'city': City.query.get(attraction.city_id).name
+                            })
+                    except Exception as e:
+                        print(e)
+
+            trips = {
+                'destination': city,
+                'days': days,
+                'places': choosen_attractions
+            }
+            return jsonify(trips), 200
+        except Exception as e:
+            return e, 500
+
+
+
+
 
