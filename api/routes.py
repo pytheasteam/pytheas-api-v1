@@ -27,7 +27,6 @@ def tags():
         )
         return make_response(response)
     response = db_manager.get_tags()
-    response.headers.add('Access-Control-Allow-Origin', '*')
     return make_response(response)
 
 
