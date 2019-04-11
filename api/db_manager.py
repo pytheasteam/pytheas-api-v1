@@ -1,8 +1,6 @@
 from datetime import datetime as dt
-from errno import errorcode
 from flask import jsonify
 from api.models.user_trip_profile import UserProfile, ProfileTag
-from config.db import migration_db
 from api.models.attraction import Attraction
 from api.models.city import City
 from api.models.tag import Tag
