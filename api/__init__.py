@@ -1,5 +1,6 @@
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
+from flask_cors import CORS
 
 from config.db import app_db
 
@@ -12,7 +13,7 @@ def create_app():
     app.config['SQLALCHEMY_DATABASE_URI'] = app_db.DB_URI
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     db.init_app(app)
-
+    cors = CORS(app, resources={r"/api/*": {"origins": "*"}})
     with app.app_context():
         # Imports
         from . import routes

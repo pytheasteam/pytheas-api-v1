@@ -11,6 +11,7 @@ def entry():
     response = db_manager.create_user(
         username=body.get('username'),
         email=body.get('email'),
+        full_name=body.get('full_name'),
         google_token=body.get('google_token')
     )
     return make_response(response)

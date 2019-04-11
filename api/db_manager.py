@@ -11,42 +11,35 @@ from . import db
 
 class DBManager:
 
-    def create(self, model, **kwargs):
+    def serialize_result(self):
+        pass
+
+    def _get(self, model):
+        pass
+
+    def _create(self, model, **kwargs):
         try:
             new_model = model(**kwargs)
             db.session.add(new_model)
             db.session.commit()
             return new_model, 200
-        except:
+        except Exception as e:
+            print(e)
             return "Error", 500
 
-    def create_user(self, username, email, google_token):
-        try:
-            session_token = ""
-            new_user = User(
-                username=username,
-                email=email,
-                created=dt.now(),
-                google_token=google_token,
-                session_token=session_token
-            )
-            db.session.add(new_user)
-            db.session.commit()
-            return session_token, 200
-        except:
-            return "Error", 500
+    def create_user(self, username, full_name, email, google_token):
+        response = self._create(User, username=username, full_name=full_name, created=dt.now(),email=email, google_token=google_token)
+        if response[1] == 200:
+            return "37879879878", 200
+        else:
+            return "Error Creating New User", 500
 
-    def create_tag(self, tag_name, tag_id=None):
-        try:
-            new_tag = Tag(
-                id=tag_id,
-                name=tag_name
-            )
-            db.session.add(new_tag)
-            db.session.commit()
-            return new_tag, 200
-        except:
-            return "Error", 500
+    def create_tag(self, tag_name):
+        response = self._create(Tag, name=tag_name)
+        if response[1] == 200:
+            return str(response[0]), 200
+        else:
+            return "Error Creating New User", 500
 
     def get_tags(self):
         try:
