@@ -21,5 +21,4 @@ def create_app():
 
         # Create tables for our models
         db.create_all()
-
         return app
