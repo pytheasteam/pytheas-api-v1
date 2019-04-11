@@ -1,11 +1,14 @@
 from flask import request, make_response, json
 from flask import current_app as app
+from flask_cors import cross_origin
+
 from .db_manager import DBManager
 
 db_manager = DBManager()
 
 
 @app.route('/login', methods=['POST'])
+@cross_origin(origins='*')
 def entry():
     body = json.loads(request.data)
     response = db_manager.create_user(
