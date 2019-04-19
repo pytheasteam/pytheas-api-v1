@@ -1,14 +1,14 @@
 from flask import request, make_response, json
 from flask import current_app as app
-from flask_cors import cross_origin
+from flask_cors import CORS
 
 from .db_manager import DBManager
 
 db_manager = DBManager()
+CORS(app, supports_credentials=True)
 
 
 @app.route('/login', methods=['POST'])
-@cross_origin()
 def entry():
     body = json.loads(request.data)
     response = db_manager.create_user(
@@ -21,7 +21,6 @@ def entry():
 
 
 @app.route('/api/tags', methods=['GET', 'POST'])
-@cross_origin()
 def tags():
     if request.method == 'POST':
         body = json.loads(request.data)
@@ -34,7 +33,6 @@ def tags():
 
 
 @app.route('/api/attractions', methods=['GET', 'POST'])
-@cross_origin()
 def attractions():
     if request.method == 'POST':
         body = json.loads(request.data)
@@ -54,7 +52,6 @@ def attractions():
 
 
 @app.route('/api/profile', methods=['POST'])
-@cross_origin()
 def profiles():
     if request.method == 'POST':
         body = json.loads(request.data)
@@ -69,7 +66,6 @@ def profiles():
 
 
 @app.route('/api/explore', methods=['get'])
-@cross_origin()
 def explore():
     city = 'paris'
     response = db_manager.get_explore_trips(
