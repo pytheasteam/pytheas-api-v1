@@ -198,7 +198,8 @@ class PytheasDBManager:
             trips = {
                 'destination': city,
                 'days': days,
-                'places': choosen_attractions
+                'places': choosen_attractions,
+                'number_of_places': len(choosen_attractions)
             }
             return jsonify(trips), 200
         except Exception as e:
