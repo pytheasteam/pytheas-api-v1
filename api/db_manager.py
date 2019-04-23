@@ -169,7 +169,7 @@ class PytheasDBManager:
             city_id = City.query.filter_by(name=city).first().id
             tags_id = [tag.tag_id for tag in ProfileTag.query.filter_by(profile_id=profile_id)]
             attractions = Attraction.query.filter_by(city_id=city_id)
-            choosen_attractions = []
+            chosen_attractions = []
             for attraction in attractions:
                 try:
                     at_tag = TagAttraction.query.filter_by(attraction_id=attraction.id)
@@ -181,7 +181,7 @@ class PytheasDBManager:
                             tag.tag_id for tag in at_tag
                         ]
                         if list(set(tags_id) & set(attraction_tags)):
-                            choosen_attractions.append({
+                            chosen_attractions.append({
                                 'id': attraction.id,
                                 'name': attraction.name,
                                 'rate': attraction.rate,
@@ -195,11 +195,17 @@ class PytheasDBManager:
                     except Exception as e:
                         print(e)
 
+            chosen_attractions_by_days = []
+            for day in range(0, days):
+                chosen_attractions_by_days.append([])
+            for i, attraction in enumerate(chosen_attractions):
+                chosen_attractions_by_days[i % days].append(attraction)
+
             trips = {
                 'destination': city,
                 'days': days,
-                'places': choosen_attractions,
-                'number_of_places': len(choosen_attractions)
+                'places': chosen_attractions_by_days,
+                'number_of_places': len(chosen_attractions)
             }
             return jsonify(trips), 200
         except Exception as e:
