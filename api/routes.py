@@ -12,6 +12,7 @@ CORS(app, supports_credentials=True)
 def index():
     return 'hello'
 
+
 @app.route('/login', methods=['POST'])
 def entry():
     body = json.loads(request.data)
