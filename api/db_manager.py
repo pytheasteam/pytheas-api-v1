@@ -6,10 +6,12 @@ from api.models.city import City
 from api.models.tag import Tag
 from api.models.tag_attraction import TagAttraction
 from api.models.user import User
-from . import db
 
 
-class DBManager:
+class PytheasDBManager:
+
+    def __init__(self, db):
+        self.db = db
 
     def serialize_result(self):
         pass
@@ -20,8 +22,8 @@ class DBManager:
     def _create(self, model, **kwargs):
         try:
             new_model = model(**kwargs)
-            db.session.add(new_model)
-            db.session.commit()
+            self.db.session.add(new_model)
+            self.db.session.commit()
             return new_model, 200
         except Exception as e:
             print(e)
@@ -75,8 +77,8 @@ class DBManager:
                 website=website,
                 city_id=city_id
             )
-            db.session.add(new_attraction)
-            db.session.commit()
+            self.db.session.add(new_attraction)
+            self.db.session.commit()
             return new_attraction, 200
         except Exception as e:
             return e, 500
@@ -113,21 +115,20 @@ class DBManager:
                 country=country,
                 id=city_id
             )
-            db.session.add(new_city)
-            db.session.commit()
+            self.db.session.add(new_city)
+            self.db.session.commit()
             return new_city, 200
         except:
             return "Error", 500
 
-
     def add_to_attr_tags(self, att_id, tag_id):
         try:
             tag_att = TagAttraction(tag_id=tag_id, attraction_id=att_id)
-            db.session.add(tag_att)
-            db.session.commit()
+            self.db.session.add(tag_att)
+            self.db.session.commit()
             return tag_att, 200
         except Exception as e:
-            db.session.rollback()
+            self.db.session.rollback()
             return "Error", 500
 
     def create_profile(self, username, profile_name, tags):
@@ -140,8 +141,8 @@ class DBManager:
                 user_id=user.id,
                 name=profile_name
             )
-            db.session.add(new_profile)
-            db.session.commit()
+            self.db.session.add(new_profile)
+            self.db.session.commit()
             # create tags
             for tag in tags:
                 db_tag = Tag.query.filter_by(name=tag).first()
@@ -149,11 +150,11 @@ class DBManager:
                     tag_id=db_tag.id,
                     profile_id=new_profile.id
                 )
-                db.session.add(new_profile_tag)
-                db.session.commit()
+                self.db.session.add(new_profile_tag)
+                self.db.session.commit()
         except Exception as e:
             print(e)
-            db.session.rollback()
+            self.db.session.rollback()
             return "Error", 500
         else:
             return "success", 200

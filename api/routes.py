@@ -1,16 +1,22 @@
 from flask import request, make_response, json
 from flask import current_app as app
 from flask_cors import CORS
+from . import db
 
-from .db_manager import DBManager
+from .db_manager import PytheasDBManager
 
-db_manager = DBManager()
+db_manager = PytheasDBManager(db)
 CORS(app, supports_credentials=True)
 
 
 @app.route('/')
 def index():
     return 'hello'
+
+
+@app.route('/api')
+def api_index():
+    return 'api index'
 
 
 @app.route('/login', methods=['POST'])
