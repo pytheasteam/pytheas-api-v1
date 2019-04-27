@@ -1,5 +1,5 @@
 from datetime import datetime as dt
-from flask import jsonify
+from flask import jsonify, json
 from api.models.user_trip_profile import UserProfile, ProfileTag
 from api.models.attraction import Attraction
 from api.models.city import City
@@ -13,11 +13,21 @@ class PytheasDBManager:
     def __init__(self, db):
         self.db = db
 
-    def serialize_result(self):
-        pass
-
-    def _get(self, model):
-        pass
+    def serialize_result(self, elements):
+        serialized_result = []
+        if type(elements) is not list:
+            elements = [elements]
+        for element in elements:
+            element = vars(element)
+            fields = {}
+            for field in [x for x in list(element.keys()) if not x.startswith('_') and x != 'metadata']:
+                data = element[field]
+                try:
+                    fields[field] = data
+                except TypeError:
+                    fields[field] = None
+            serialized_result.append(fields)
+        return jsonify(serialized_result)
 
     def _create(self, model, **kwargs):
         try:
@@ -27,43 +37,36 @@ class PytheasDBManager:
             return new_model, 200
         except Exception as e:
             print(e)
-            return "Error", 500
+            return "Error creating new model", 500
 
     def create_user(self, username, full_name, email, google_token):
-        response = self._create(User, username=username, full_name=full_name, created=dt.now(),email=email, google_token=google_token)
+        response = self._create(
+            User,
+            username=username,
+            full_name=full_name,
+            created=dt.now(),
+            email=email,
+            google_token=google_token
+        )
         if response[1] == 200:
             return "37879879878", 200
-        else:
-            return "Error Creating New User", 500
+        return "Error Creating New User", 500
 
     def create_tag(self, tag_name):
         response = self._create(Tag, name=tag_name)
         if response[1] == 200:
             return str(response[0]), 200
-        else:
-            return "Error Creating New User", 500
+        return "Error Creating New Tag", 500
 
     def get_cities(self):
         try:
-            cities = City.query.all()
-            cities_list = [{
-                'id': city.id,
-                'name': city.name,
-                'country': city.country
-
-            } for city in cities]
-            return jsonify(cities_list), 200
+            return self.serialize_result(City.query.all()), 200
         except:
             return 'Error', 500
 
     def get_tags(self):
         try:
-            tags = Tag.query.all()
-            tag_list = [{
-                'id': tag.id,
-                'name': tag.name
-            } for tag in tags]
-            return jsonify(tag_list), 200
+            return self.serialize_result(Tag.query.all()), 200
         except:
             return 'Error', 500
 
@@ -105,19 +108,7 @@ class PytheasDBManager:
                 except:
                     return None
         try:
-            attractions = Attraction.query.all()
-            attraction_list = [{
-                'id': attraction.id,
-                'name': attraction.name,
-                'rate': attraction.rate,
-                'address': attraction.address,
-                'price': attraction.price,
-                'description': attraction.description,
-                'phone number': attraction.phone_number,
-                'website': attraction.website,
-                'city name': City.query.filter(id=attraction.city_id).name
-            } for attraction in attractions]
-            return jsonify(attraction_list), 200
+            return self.serialize_result(Attraction.query.all()), 200
         except:
             return "Error", 500
 
@@ -171,9 +162,6 @@ class PytheasDBManager:
             return "Error", 500
         else:
             return "success", 200
-
-    def migrate_data(self):
-        pass
 
     def get_explore_trips(self, city, username, profile, days):
         try:
