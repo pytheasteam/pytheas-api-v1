@@ -43,6 +43,19 @@ class PytheasDBManager:
         else:
             return "Error Creating New User", 500
 
+    def get_cities(self):
+        try:
+            cities = City.query.all()
+            cities_list = [{
+                'id': city.id,
+                'name': city.name,
+                'country': city.country
+
+            } for city in cities]
+            return jsonify(cities_list), 200
+        except:
+            return 'Error', 500
+
     def get_tags(self):
         try:
             tags = Tag.query.all()
@@ -52,7 +65,7 @@ class PytheasDBManager:
             } for tag in tags]
             return jsonify(tag_list), 200
         except:
-            return "Error", 500
+            return 'Error', 500
 
     def create_attraction(self,
                           name,

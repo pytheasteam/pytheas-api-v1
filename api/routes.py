@@ -43,6 +43,12 @@ def tags():
     return make_response(response)
 
 
+@app.route('/api/cities', methods=['GET'])
+def cities():
+    response = db_manager.get_cities()
+    return make_response(response)
+
+
 @app.route('/api/attractions', methods=['GET', 'POST'])
 def attractions():
     if request.method == 'POST':
@@ -62,7 +68,7 @@ def attractions():
     return make_response(response)
 
 
-@app.route('/api/profile', methods=['POST'])
+@app.route('/api/profile', methods=['POST', 'GET'])
 def profiles():
     if request.method == 'POST':
         body = json.loads(request.data)
@@ -83,6 +89,6 @@ def explore():
         city=city,
         username='userTest',
         profile='art',
-        days=7
+        days=3
     )
     return make_response(response)
