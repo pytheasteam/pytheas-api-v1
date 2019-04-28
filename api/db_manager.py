@@ -6,12 +6,18 @@ from api.models.city import City
 from api.models.tag import Tag
 from api.models.tag_attraction import TagAttraction
 from api.models.user import User
+from api.models.flights_rsrv import FlightReservation
+from api.models.trip import Trip, TripAttraction
 
 
 class PytheasDBManager:
 
     def __init__(self, db):
         self.db = db
+
+    def init(self):
+        self.db.create_all()
+        self.db.session.commit()
 
     def serialize_result(self, elements):
         serialized_result = []
@@ -29,6 +35,7 @@ class PytheasDBManager:
             serialized_result.append(fields)
         return jsonify(serialized_result)
 
+    #  CREATES FUNCTIONS
     def _create(self, model, **kwargs):
         try:
             new_model = model(**kwargs)
@@ -57,18 +64,6 @@ class PytheasDBManager:
         if response[1] == 200:
             return str(response[0]), 200
         return "Error Creating New Tag", 500
-
-    def get_cities(self):
-        try:
-            return self.serialize_result(City.query.all()), 200
-        except:
-            return 'Error', 500
-
-    def get_tags(self):
-        try:
-            return self.serialize_result(Tag.query.all()), 200
-        except:
-            return 'Error', 500
 
     def create_attraction(self,
                           name,
@@ -99,19 +94,6 @@ class PytheasDBManager:
         except Exception as e:
             return e, 500
 
-    def get_attractions(self, **kwargs):
-        if kwargs:
-            if 'name' in kwargs:
-                try:
-                    attractions = Attraction.query.filter_by(name=kwargs['name']).first()
-                    return attractions
-                except:
-                    return None
-        try:
-            return self.serialize_result(Attraction.query.all()), 200
-        except:
-            return "Error", 500
-
     def create_city(self, name, country, city_id=None):
         try:
             new_city = City(
@@ -123,16 +105,6 @@ class PytheasDBManager:
             self.db.session.commit()
             return new_city, 200
         except:
-            return "Error", 500
-
-    def add_to_attr_tags(self, att_id, tag_id):
-        try:
-            tag_att = TagAttraction(tag_id=tag_id, attraction_id=att_id)
-            self.db.session.add(tag_att)
-            self.db.session.commit()
-            return tag_att, 200
-        except Exception as e:
-            self.db.session.rollback()
             return "Error", 500
 
     def create_profile(self, username, profile_name, tags):
@@ -162,6 +134,42 @@ class PytheasDBManager:
             return "Error", 500
         else:
             return "success", 200
+
+    #  GET FUNCTIONS
+    def get_cities(self):
+        try:
+            return self.serialize_result(City.query.all()), 200
+        except:
+            return 'Error', 500
+
+    def get_tags(self):
+        try:
+            return self.serialize_result(Tag.query.all()), 200
+        except:
+            return 'Error', 500
+
+    def get_attractions(self, **kwargs):
+        if kwargs:
+            if 'name' in kwargs:
+                try:
+                    attraction = Attraction.query.filter_by(name=kwargs['name']).first()
+                    return attraction
+                except:
+                    return None
+        try:
+            return self.serialize_result(Attraction.query.all()), 200
+        except:
+            return "Error", 500
+
+    def add_to_attr_tags(self, att_id, tag_id):
+        try:
+            tag_att = TagAttraction(tag_id=tag_id, attraction_id=att_id)
+            self.db.session.add(tag_att)
+            self.db.session.commit()
+            return tag_att, 200
+        except Exception as e:
+            self.db.session.rollback()
+            return "Error", 500
 
     def get_explore_trips(self, city, username, profile, days):
         try:

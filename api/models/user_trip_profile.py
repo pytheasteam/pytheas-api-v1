@@ -39,5 +39,7 @@ class ProfileTag(db.Model):
         db.ForeignKey('tag.id')
     )
 
-    profile = db.relationship(UserProfile, backref=db.backref("user_profile", cascade="all, delete-orphan"))
-    tag = db.relationship(Tag, backref=db.backref("tag", cascade="all, delete-orphan"))
+    profile = db.relationship(UserProfile, backref=db.backref("user_profile", cascade="all, delete, delete-orphan"))
+    tag = db.relationship(Tag, backref=db.backref("tag", cascade="all, delete, delete-orphan"))
+
+

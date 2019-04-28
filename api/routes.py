@@ -11,7 +11,8 @@ CORS(app, supports_credentials=True)
 
 @app.route('/')
 def index():
-    return 'hello'
+    db_manager.init()
+    return 'Health Check'
 
 
 @app.route('/api')
