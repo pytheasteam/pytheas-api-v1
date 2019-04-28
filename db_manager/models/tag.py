@@ -1,4 +1,4 @@
-from .. import db
+from api import db
 
 
 class Tag(db.Model):

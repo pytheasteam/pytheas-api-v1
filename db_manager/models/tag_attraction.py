@@ -2,8 +2,8 @@ from api import db
 
 
 class TagAttraction(db.Model):
-    from api.models.attraction import Attraction
-    from api.models.tag import Tag
+    from .attraction import Attraction
+    from .tag import Tag
 
     __tablename__ = 'attractions_tags'
 

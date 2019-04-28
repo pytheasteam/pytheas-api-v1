@@ -3,16 +3,15 @@ from flask import current_app as app
 from flask_cors import CORS
 from . import db
 
-from .db_manager import PytheasDBManager
+from db_manager.db_manager import SQLPytheasManager
 
-db_manager = PytheasDBManager(db)
+db_manager = SQLPytheasManager(db)
 CORS(app, supports_credentials=True)
 
 
 @app.route('/')
 def index():
-    db_manager.init()
-    return 'Health Check'
+    return 'Server is running'
 
 
 @app.route('/api')

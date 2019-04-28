@@ -1,23 +1,14 @@
 from datetime import datetime as dt
-from flask import jsonify, json
-from api.models.user_trip_profile import UserProfile, ProfileTag
-from api.models.attraction import Attraction
-from api.models.city import City
-from api.models.tag import Tag
-from api.models.tag_attraction import TagAttraction
-from api.models.user import User
-from api.models.flights_rsrv import FlightReservation
-from api.models.trip import Trip, TripAttraction
+from flask import jsonify
+from db_manager.models.attraction import Attraction
+from db_manager.models.city import City
+from db_manager.models.tag import Tag
+from db_manager.models.tag_attraction import TagAttraction
+from db_manager.models.user import User
+from db_manager.pytheas_db_manager_base import PytheasDBManagerBase
 
 
-class PytheasDBManager:
-
-    def __init__(self, db):
-        self.db = db
-
-    def init(self):
-        self.db.create_all()
-        self.db.session.commit()
+class SQLPytheasManager(PytheasDBManagerBase):
 
     def serialize_result(self, elements):
         serialized_result = []
@@ -38,7 +29,7 @@ class PytheasDBManager:
     #  CREATES FUNCTIONS
     def _create(self, model, **kwargs):
         try:
-            new_model = model(**kwargs)
+            new_model = model(*kwargs)
             self.db.session.add(new_model)
             self.db.session.commit()
             return new_model, 200

@@ -1,7 +1,7 @@
-from api.models.attraction import Attraction
-from api.models.city import City
-from api.models.user import User
-from .. import db
+from .attraction import Attraction
+from .city import City
+from .user import User
+from api import db
 
 
 class Trip(db.Model):

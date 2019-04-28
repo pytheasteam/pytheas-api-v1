@@ -2,7 +2,7 @@ from api import db
 
 
 class UserProfile(db.Model):
-    from api.models.user import User
+    from db_manager.models.user import User
 
     __tablename__ = 'user_profile'
 
@@ -23,7 +23,7 @@ class UserProfile(db.Model):
 
 
 class ProfileTag(db.Model):
-    from api.models.tag import Tag
+    from .tag import Tag
 
     __tablename__ = 'profile_tag'
 

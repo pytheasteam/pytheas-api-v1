@@ -1,6 +1,6 @@
-from api.models.city import City
-from api.models.trip import Trip
-from .. import db
+from .city import City
+from .trip import Trip
+from api import db
 
 
 class FlightReservation(db.Model):
