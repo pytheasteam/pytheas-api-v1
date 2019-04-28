@@ -1,11 +1,12 @@
 from flask import request, make_response, json
 from flask import current_app as app
 from flask_cors import CORS
-from . import db
 
 from db_manager.db_manager import SQLPytheasManager
+from . import db
 
 db_manager = SQLPytheasManager(db)
+
 CORS(app, supports_credentials=True)
 
 
@@ -16,6 +17,7 @@ def index():
 
 @app.route('/api')
 def api_index():
+    db_manager.init()
     return 'api index'
 
 
@@ -40,7 +42,7 @@ def tags():
         )
         return make_response(response)
     response = db_manager.get_tags()
-    return make_response(response)
+    return response
 
 
 @app.route('/api/cities', methods=['GET'])

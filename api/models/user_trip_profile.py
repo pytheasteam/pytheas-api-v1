@@ -1,8 +1,8 @@
-from api import db
+from .. import db
 
 
 class UserProfile(db.Model):
-    from db_manager.models.user import User
+    from api.models.user import User
 
     __tablename__ = 'user_profile'
 

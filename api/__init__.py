@@ -1,7 +1,8 @@
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
+
 from config.db import app_db
-from db_manager import models
+
 db = SQLAlchemy()
 
 
@@ -14,7 +15,5 @@ def create_app():
     with app.app_context():
         # Imports
         from . import routes
-
         # Create tables for our models
-        db.create_all()
         return app

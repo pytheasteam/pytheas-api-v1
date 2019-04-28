@@ -1,14 +1,23 @@
 from datetime import datetime as dt
 from flask import jsonify
-from db_manager.models.attraction import Attraction
-from db_manager.models.city import City
-from db_manager.models.tag import Tag
-from db_manager.models.tag_attraction import TagAttraction
-from db_manager.models.user import User
+from api.models.attraction import Attraction
+from api.models.city import City
+from api.models.tag import Tag
+from api.models.tag_attraction import TagAttraction
+from api.models.user import User
+from api.models.user_trip_profile import UserProfile, ProfileTag
 from db_manager.pytheas_db_manager_base import PytheasDBManagerBase
 
 
 class SQLPytheasManager(PytheasDBManagerBase):
+
+    def __init__(self, db):
+        super().__init__(db)
+
+    def init(self):
+        self.db.create_all()
+        self.db.session.commit()
+        return "success", 200
 
     def serialize_result(self, elements):
         serialized_result = []
@@ -135,9 +144,9 @@ class SQLPytheasManager(PytheasDBManagerBase):
 
     def get_tags(self):
         try:
-            return self.serialize_result(Tag.query.all()), 200
-        except:
-            return 'Error', 500
+            return self.serialize_result(Tag.query.all())
+        except Exception as e:
+            return str(e), 500
 
     def get_attractions(self, **kwargs):
         if kwargs:

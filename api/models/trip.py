@@ -1,7 +1,8 @@
 from .attraction import Attraction
 from .city import City
 from .user import User
-from api import db
+
+from .. import db
 
 
 class Trip(db.Model):
@@ -50,6 +51,16 @@ class Trip(db.Model):
         db.Integer,
         db.ForeignKey('cities.id'),
         nullable=False
+    )
+
+    flight_rsrv = db.Column(
+        db.String(100),
+        nullable=True
+    )
+
+    hotel_rsrv = db.Column(
+        db.String(100),
+        nullable=True
     )
 
     city = db.relationship(

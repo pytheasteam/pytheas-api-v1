@@ -1,4 +1,6 @@
-from api import db
+
+from api.models.city import City
+from .. import db
 
 
 class Attraction(db.Model):
@@ -64,7 +66,7 @@ class Attraction(db.Model):
         nullable=False
     )
     city = db.relationship(
-        'City',
+        City,
         backref=db.backref('attractions', lazy=True)
     )
 

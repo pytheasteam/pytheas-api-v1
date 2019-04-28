@@ -1,4 +1,4 @@
-from api import db
+from .. import db
 
 
 class City(db.Model):
