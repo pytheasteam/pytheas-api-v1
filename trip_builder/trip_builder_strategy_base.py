@@ -10,7 +10,7 @@ class TripBuilderStrategyBase:
 
         """
         Build trip according to the strategy
-        :param trip_duration: Duration of the trip
+        :param trip_duration: Duration of the trip in days
         :param attraction_list: List of optional attractions
         :return: list of attraction sub lists separated by days
         """
