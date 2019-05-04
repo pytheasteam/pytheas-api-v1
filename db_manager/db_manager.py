@@ -116,12 +116,16 @@ class SQLPytheasManager(PytheasDBManagerBase):
         else:
             return "success", 200
 
-    def create_trip(self, username, start_date, end_date, price, is_booked, explore_trip):
+    def create_trip(self, username, start_date, end_date, price, flight, hotel, explore_trip):
         try:
             user = User.query.filter_by(username=username).first()
             city = City.query.filter_by(name=explore_trip['destination']).first()
             start_date = datetime.strptime(start_date, '%Y-%m-%d')
             end_date = datetime.strptime(end_date, '%Y-%m-%d')
+            if flight is None and hotel is None:
+                is_booked = False
+            else:
+                is_booked = True
             new_trip = Trip(
                 user_id=user.id,
                 start_date=start_date,
@@ -137,7 +141,7 @@ class SQLPytheasManager(PytheasDBManagerBase):
                     new_trip_attraction = TripAttraction(
                         trip_id=new_trip.id,
                         attraction_id=attraction['id'],
-                        day=day+1
+                        day=day + 1
                     )
                     self.db.session.add(new_trip_attraction)
                     self.db.session.commit()
@@ -147,7 +151,6 @@ class SQLPytheasManager(PytheasDBManagerBase):
             return "Error creating new profile", 500
         else:
             return "success", 200
-
 
     #  GET FUNCTIONS
     def get_cities(self):
@@ -185,6 +188,52 @@ class SQLPytheasManager(PytheasDBManagerBase):
             self.db.session.rollback()
             return f"Error adding tag to attractions: {str(e)}", 500
 
+    def get_trip_attraction(self, trip_id):
+        attractions_trip = TripAttraction.query.filter_by(trip_id=trip_id)
+        parsed_attractions = []
+        day = -1
+        for attraction_trip in attractions_trip:
+            attraction = Attraction.query.get(attraction_trip.attraction_id)
+            parsed_attraction = {
+                'id': attraction.id,
+                'name': attraction.name,
+                'rate': attraction.rate,
+                'address': attraction.address,
+                'price': attraction.price,
+                'description': attraction.description,
+                'phone number': attraction.phone_number,
+                'website': attraction.website,
+                'city': City.query.get(attraction.city_id).name
+            }
+            if (attraction_trip.day - 1) is not day:
+                parsed_attractions.append([parsed_attraction])
+                day += 1
+            else:
+                parsed_attractions[day].append(parsed_attraction)
+        return parsed_attractions
+
+    def get_trips(self, username):
+        try:
+            user_id = User.query.filter_by(username=username).first().id
+            trips = Trip.query.filter_by(user_id=user_id)
+            all_trips = []
+            for trip in trips:
+                parsed_trip = {
+                    'start_date': trip.start_date,
+                    'end_date': trip.end_date,
+                    'price': trip.price,
+                    'is_booked': bool(trip.is_booked),
+                    'city': City.query.get(trip.city_id).name,
+                    'flight': trip.flight_rsrv,
+                    'hotel': trip.hotel_rsrv,
+                    'places': self.get_trip_attraction(trip.id)
+                }
+                all_trips.append(parsed_trip)
+        except Exception as e:
+            return str(e), 500
+        else:
+            return jsonify(all_trips), 200
+
     def get_explore_trips(self, city, username, profile, days):
         try:
             user_id = User.query.filter_by(username=username).first().id
@@ -217,4 +266,3 @@ class SQLPytheasManager(PytheasDBManagerBase):
             'profile_id': profile_id,
             'city_id': city_id
         }
-

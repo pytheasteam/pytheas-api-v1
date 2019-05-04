@@ -98,17 +98,21 @@ def explore():
 
 @app.route('/api/trip', methods=['GET', 'POST', 'PUT'])
 def trip():
+    response = 500
     if request.method == 'POST':
-        print(request.data)
         body = json.loads(request.data)
         response = db_manager.create_trip(
             username=body.get('username'),
             start_date=body.get('start_date'),
             end_date=body.get('end_date'),
             price=body.get('price'),
-            is_booked=body.get('booked'),
+            flight=body.get('flight'),
+            hotel=body.get('hotel'),
             explore_trip=body.get('trip')  # Same as the explore trip that sent in /api/explore
         )
     elif request.method == 'PUT':
         pass
-    return 'list off all trips', 200
+    else:
+        username = 'userTest'
+        response = db_manager.get_trips(username)
+    return make_response(response)
