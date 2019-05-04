@@ -5,3 +5,4 @@ ARTICLE_COLLECTION = 'test'
 USERNAME = 'pytheas'
 PASSWORD = 'pytheas1'
 
+URI = f'mongodb://{USERNAME}:{PASSWORD}@{HOST}:{PORT}/{DB}'
