@@ -1,4 +1,4 @@
-from datetime import datetime as dt
+from datetime import datetime as dt, datetime
 from flask import jsonify
 
 from agent.get_attractions_for_profile import agent_mock_call_stub
@@ -6,6 +6,7 @@ from api.models.attraction import Attraction
 from api.models.city import City
 from api.models.tag import Tag
 from api.models.tag_attraction import TagAttraction
+from api.models.trip import Trip, TripAttraction
 from api.models.user import User
 from api.models.user_trip_profile import UserProfile, ProfileTag
 from db_manager.pytheas_db_manager_base import PytheasDBManagerBase
@@ -115,6 +116,39 @@ class SQLPytheasManager(PytheasDBManagerBase):
         else:
             return "success", 200
 
+    def create_trip(self, username, start_date, end_date, price, is_booked, explore_trip):
+        try:
+            user = User.query.filter_by(username=username).first()
+            city = City.query.filter_by(name=explore_trip['destination']).first()
+            start_date = datetime.strptime(start_date, '%Y-%m-%d')
+            end_date = datetime.strptime(end_date, '%Y-%m-%d')
+            new_trip = Trip(
+                user_id=user.id,
+                start_date=start_date,
+                end_date=end_date,
+                price=price,
+                is_booked=is_booked,
+                city_id=city.id
+            )
+            self.db.session.add(new_trip)
+            self.db.session.commit()
+            for day in range(explore_trip['days']):
+                for attraction in explore_trip['places'][day]:
+                    new_trip_attraction = TripAttraction(
+                        trip_id=new_trip.id,
+                        attraction_id=attraction['id'],
+                        day=day+1
+                    )
+                    self.db.session.add(new_trip_attraction)
+                    self.db.session.commit()
+        except Exception as e:
+            print(e)
+            self.db.session.rollback()
+            return "Error creating new profile", 500
+        else:
+            return "success", 200
+
+
     #  GET FUNCTIONS
     def get_cities(self):
         try:
@@ -173,3 +207,14 @@ class SQLPytheasManager(PytheasDBManagerBase):
             return jsonify(trips), 200
         except Exception as e:
             return str(e), 500
+
+    def get_trip_config(self, city, username, profile):
+        user_id = User.query.filter_by(username=username).first().id
+        profile_id = UserProfile.query.filter_by(user_id=user_id, name=profile).first().id
+        city_id = City.query.filter_by(name=city).first().id
+        return {
+            'user_id': user_id,
+            'profile_id': profile_id,
+            'city_id': city_id
+        }
+

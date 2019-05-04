@@ -16,10 +16,10 @@ class UserProfile(db.Model):
         db.String(50)
     )
 
-    user = db.relationship(User, backref=db.backref("users", cascade="all, delete-orphan"))
+    user = db.relationship(User, backref=db.backref("user_profile", cascade="all, delete-orphan"))
 
     def __repr__(self):
-        return '<Tag - Attraction {} - {}>'.format(self.tag_id, self.attraction_id)
+        return '<Use - Profile {} - {}>'.format(self.user_id, self.name)
 
 
 class ProfileTag(db.Model):
@@ -39,7 +39,7 @@ class ProfileTag(db.Model):
         db.ForeignKey('tag.id')
     )
 
-    profile = db.relationship(UserProfile, backref=db.backref("user_profile", cascade="all, delete, delete-orphan"))
-    tag = db.relationship(Tag, backref=db.backref("tag", cascade="all, delete, delete-orphan"))
+    profile = db.relationship(UserProfile, backref=db.backref("profile_tag", cascade="all, delete, delete-orphan"))
+    tag = db.relationship(Tag, backref=db.backref("profile_tag", cascade="all, delete, delete-orphan"))
 
 

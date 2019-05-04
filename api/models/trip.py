@@ -65,12 +65,12 @@ class Trip(db.Model):
 
     city = db.relationship(
         City,
-        backref=db.backref('cities', cascade="all, delete, delete-orphan")
+        backref=db.backref('trips', cascade="all, delete, delete-orphan")
     )
 
     user = db.relationship(
         User,
-        backref=db.backref('users', cascade="all, delete, delete-orphan")
+        backref=db.backref('trips', cascade="all, delete, delete-orphan")
     )
 
     def __repr__(self):
@@ -100,12 +100,12 @@ class TripAttraction(db.Model):
 
     trip = db.relationship(
         Trip,
-        backref=db.backref("trips", cascade="all, delete-orphan")
+        backref=db.backref("trip_attraction", cascade="all, delete-orphan")
     )
 
     attraction = db.relationship(
         Attraction,
-        backref=db.backref("attractions", cascade="all, delete-orphan")
+        backref=db.backref("trip_attraction", cascade="all, delete-orphan")
     )
 
 
