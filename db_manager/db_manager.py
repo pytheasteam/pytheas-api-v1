@@ -211,12 +211,12 @@ class SQLPytheasManager(PytheasDBManagerBase):
             for i, attraction in enumerate(chosen_attractions):
                 chosen_attractions_by_days[i % days].append(attraction)
 
-            trips = {
+            trips = [{
                 'destination': city,
                 'days': days,
                 'places': chosen_attractions_by_days,
                 'number_of_places': len(chosen_attractions)
-            }
+            }]
             return jsonify(trips), 200
         except Exception as e:
             return e, 500
