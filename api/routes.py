@@ -17,7 +17,7 @@ def index():
 
 @app.route('/api')
 def api_index():
-    db_manager.init()
+    db_manager.initialize()
     return 'api index'
 
 
