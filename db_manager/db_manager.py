@@ -19,7 +19,8 @@ class SQLPytheasManager(PytheasDBManagerBase):
         self.db.session.commit()
         return "success", 200
 
-    def serialize_result(self, elements):
+    @staticmethod
+    def serialize_result(elements):
         serialized_result = []
         if type(elements) is not list:
             elements = [elements]

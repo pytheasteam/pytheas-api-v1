@@ -84,7 +84,7 @@ def profiles():
     return make_response(response)
 
 
-@app.route('/api/explore', methods=['get'])
+@app.route('/api/explore', methods=['GET'])
 def explore():
     city = 'paris'
     response = db_manager.get_explore_trips(
@@ -94,3 +94,12 @@ def explore():
         days=3
     )
     return make_response(response)
+
+
+@app.route('/api/trip', methods=['GET', 'POST', 'PUT'])
+def trip():
+    if request.method == 'POST':
+        pass
+    elif request.method == 'PUT':
+        pass
+    return 'list off all trips', 200
