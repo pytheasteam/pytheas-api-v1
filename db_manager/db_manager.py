@@ -41,6 +41,7 @@ def agent_mock_call_stub(profile_id, city_id):
 
 
 class SQLPytheasManager(PytheasDBManagerBase):
+    # TODO: Refactor exceptions handling
 
     def __init__(self, db):
         super().__init__(db)
@@ -147,8 +148,8 @@ class SQLPytheasManager(PytheasDBManagerBase):
     def get_cities(self):
         try:
             return self.serialize_result(City.query.all()), 200
-        except:
-            return 'Error getting cities', 500
+        except Exception as e:
+            return f'Error getting cities: {str(e)}', 500
 
     def get_tags(self):
         try:
