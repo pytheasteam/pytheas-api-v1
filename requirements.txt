@@ -63,10 +63,6 @@ public==1.0.3
 py2app==0.7.3
 Pygments==2.3.0
 pymongo==3.7.2
-pyobjc-core==5.1.1
-pyobjc-framework-Cocoa==5.1.1
-pyobjc-framework-CoreData==5.1.1
-pyobjc-framework-Quartz==5.1.1
 pyparsing==2.0.1
 pyrsistent==0.14.11
 python-dateutil==2.7.5
