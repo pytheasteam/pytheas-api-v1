@@ -1,6 +1,8 @@
+import jwt
 from flask import request, make_response, json
 from flask import current_app as app
 from flask_cors import CORS
+from db_manager.config.secrets import SERVER_SECRET_KEY
 
 from db_manager.db_manager import SQLPytheasManager
 from . import db
@@ -15,22 +17,25 @@ def index():
     return 'Server is running'
 
 
+@app.route('/login', methods=['POST'])
+def entry():
+    try:
+        body = json.loads(request.data)
+        response = db_manager.create_user(
+            username=body.get('email'),
+            email=body.get('email'),
+            full_name=body.get('full_name'),
+            google_token=body.get('google_token')
+        )
+    except:
+        response = 'Invalid request', 400
+    return make_response(response)
+
+
 @app.route('/api')
 def api_index():
     db_manager.initialize()
     return 'api index'
-
-
-@app.route('/login', methods=['POST'])
-def entry():
-    body = json.loads(request.data)
-    response = db_manager.create_user(
-        username=body.get('username'),
-        email=body.get('email'),
-        full_name=body.get('full_name'),
-        google_token=body.get('google_token')
-    )
-    return make_response(response)
 
 
 @app.route('/api/tags', methods=['GET', 'POST'])
@@ -87,9 +92,11 @@ def profiles():
 @app.route('/api/explore', methods=['GET'])
 def explore():
     city = 'paris'
+    token = request.headers.get('Authorization').split(' ')[1]
+    username = jwt.decode(token, SERVER_SECRET_KEY, algorithms=['HS256'])
     response = db_manager.get_explore_trips(
         city=city,
-        username='userTest',
+        username=username,
         profile='art',
         days=3
     )
@@ -113,6 +120,13 @@ def trip():
     elif request.method == 'PUT':
         pass
     else:
-        username = 'userTest'
-        response = db_manager.get_trips(username)
+        try:
+            token = request.headers.get('Authorization').split(' ')[1]
+            username = jwt.decode(token, SERVER_SECRET_KEY, algorithms=['HS256'])
+            # username = 'userTest'
+        except Exception as e:
+            return make_response(f'Cannot find token in headers: {e}', 400)
+        else:
+            response = db_manager.get_trips(username)
+
     return make_response(response)

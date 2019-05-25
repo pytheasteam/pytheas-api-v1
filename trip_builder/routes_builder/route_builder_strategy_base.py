@@ -35,7 +35,7 @@ class RoutesBuilderStrategyBase:
 
         suggested_duration = [int(s) for s in re.findall(ONLY_DIGIT_REGEX, suggested_duration)]
         if len(suggested_duration) > 1:
-            duration_time = (suggested_duration[0]*suggested_duration[1] / 2)  # Average time between X-Y expression
+            duration_time = (suggested_duration[0]*suggested_duration[1]) / 2  # Average time between X-Y expression
             return duration_time if duration_time > 0 else -1*duration_time
         elif len(suggested_duration) > 0:
             return suggested_duration[0]

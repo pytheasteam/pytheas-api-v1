@@ -16,7 +16,7 @@ class DFSRoutesBuilder(RoutesBuilderStrategyBase):
         max_radius = 3
         radius = min_radius
         passed_attractions = []
-        while all_attractions and self.routes < number_of_routes:
+        while all_attractions and len(self.routes) < number_of_routes:
             current_attraction = all_attractions.pop()
             current_attraction_neighbors = self.get_all_attractions_in_radius(
                 current_attraction,

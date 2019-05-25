@@ -1,6 +1,8 @@
 from datetime import datetime as dt, datetime
 from flask import jsonify
 import jwt
+
+from agent.get_attractions_for_profile import agent_mock_call_stub
 from db_manager.config.secrets import SERVER_SECRET_KEY
 from api.models.attraction import Attraction
 from api.models.city import City
@@ -53,21 +55,19 @@ class SQLPytheasManager(PytheasDBManagerBase):
     def create_user(self, username, full_name, email, google_token):
         email_exist = User.query.filter_by(email=email).first()
         username_exist = User.query.filter_by(username=username).first()
-        if email_exist or username_exist:
-            return 'User already exist', 409
-        new_user, status = self._create(
-            User,
-            id=None,
-            username=username,
-            full_name=full_name,
-            created=dt.now(),
-            email=email,
-            google_token=google_token
-        )
-        if status == 200:
-            print(SERVER_SECRET_KEY)
-            return jwt.encode({'username': new_user.username}, SERVER_SECRET_KEY, algorithm='HS256').decode('utf-8'), 200
-        return new_user, status
+        if not email_exist and not username_exist:
+            new_user, status = self._create(
+                User,
+                id=None,
+                username=username,
+                full_name=full_name,
+                created=dt.now(),
+                email=email,
+                google_token=google_token
+            )
+            if status is not 200:
+                return new_user, status
+        return jwt.encode({'username': username}, SERVER_SECRET_KEY, algorithm='HS256').decode('utf-8'), 200
 
     def create_tag(self, tag_name):
         return self._create(
@@ -249,8 +249,7 @@ class SQLPytheasManager(PytheasDBManagerBase):
             profile_id = UserProfile.query.filter_by(user_id=user_id, name=profile).first().id
             city_id = City.query.filter_by(name=city).first().id
             # TODO: Call the agent for getting the attractions
-            # chosen_attractions = agent_mock_call_stub(profile_id, city_id)
-            chosen_attractions = []
+            chosen_attractions = agent_mock_call_stub(profile_id, city_id)
             # TODO: Switch below section to trip builder strategy
             chosen_attractions_by_days = []
             for day in range(0, days):
