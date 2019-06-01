@@ -16,6 +16,8 @@ from api.models.trip import Trip, TripAttraction
 from api.models.user import User
 from api.models.user_trip_profile import UserProfile, ProfileTag
 from db_manager.pytheas_db_manager_base import PytheasDBManagerBase
+from trip_builder.city_trip_builder import CityWalkTripBuilder
+from trip_builder.routes_builder.basic_route_builder import BasicRoutesBuilder
 
 
 class SQLPytheasManager(PytheasDBManagerBase):
@@ -270,37 +272,16 @@ class SQLPytheasManager(PytheasDBManagerBase):
             if agent_response.status_code is not 200:
                 return agent_response.content, agent_response.status_code
             agent_results = json.loads(agent_response.content)
-            # chosen_attractions = agent_mock_call_stub(profile_id, city_id)
-            # TODO: Switch below section to trip builder strategy
             trips = []
+            trip_builder = CityWalkTripBuilder(BasicRoutesBuilder())
             for result in agent_results:
                 city = City.query.filter_by(id=result['city_id']).first().name
                 attractions = result['attractions']['5']
                 attractions.extend(result['attractions']['4'])
-                chosen_attractions_by_days = []
-                for day in range(0, days):
-                    chosen_attractions_by_days.append([])
-                for i, attraction in enumerate(attractions):
-                    attraction_object = Attraction.query.filter_by(id=attraction).first()
-                    chosen_attractions_by_days[i % days].append(
-                        {
-                            'id': attraction_object.id,
-                            'name': attraction_object.name,
-                            'rate': attraction_object.rate,
-                            'address': attraction_object.address,
-                            'price': attraction_object.price,
-                            'description': attraction_object.description,
-                            'phone number': attraction_object.phone_number,
-                            'website': attraction_object.website,
-                            'city': City.query.get(attraction_object.city_id).name
-                        }
-                    )
-                trips = [{
-                    'destination': city,
-                    'days': days,
-                    'places': chosen_attractions_by_days,
-                    'number_of_places': len(attractions)
-                }]
+                attractions = [Attraction.query.get(attraction_id) for attraction_id in attractions]
+                trips.append(
+                    trip_builder.build_trip(days, attractions, city)
+                )
             return jsonify(trips), 200
         except Exception as e:
             return str(e), 500

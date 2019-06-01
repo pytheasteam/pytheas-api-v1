@@ -5,6 +5,6 @@ API_ENDPOINT = 'http://dev.virtualearth.net/REST/v1/Routes'
 
 
 class RouteType(Enum):
-    WALKING = '/Walking'
+    WALKING = 'Walking'
 
 

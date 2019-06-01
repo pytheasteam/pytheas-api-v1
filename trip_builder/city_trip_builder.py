@@ -17,8 +17,8 @@ class CityWalkTripBuilder(TripBuilderStrategyBase):
         self.hotel = hotel
         self.route_builder = route_builder_strategy
 
-    def build_trip(self, trip_duration, attraction_list):
-        # type: (int, list) -> list
+    def build_trip(self, trip_duration, attraction_list, city):
+        # type: (int, list, str) -> list
         """
         Build trips for city walk based attractions
         best for Art, Families and friends
@@ -41,7 +41,12 @@ class CityWalkTripBuilder(TripBuilderStrategyBase):
             starting_point=starting_point
 
         )
-        return routes
+        return [{
+                    'destination': city,
+                    'days': trip_duration,
+                    'places': routes,
+                    'number_of_places': len(attraction_list)
+                }]
 
     @staticmethod
     def _get_distances_between_attractions(attraction_list, route_type):
@@ -59,8 +64,8 @@ class CityWalkTripBuilder(TripBuilderStrategyBase):
         temp_attraction_list = list(attraction_list)
         while temp_attraction_list:
             attraction = temp_attraction_list.pop()
-            if attraction.name not in distances:
-                distances[attraction.name] = {}
+            if attraction.id not in distances:
+                distances[attraction.id] = {}
             for other_attraction in temp_attraction_list:
                 params = {
                     'wayPoint.1': attraction.address,
@@ -68,10 +73,16 @@ class CityWalkTripBuilder(TripBuilderStrategyBase):
                     "wayPoint.n": number_of_locations,
                     'key': bing_api.API_KEY
                 }
-                r = requests.get(url=bing_api.API_ENDPOINT + route_type, params=params)
+                if other_attraction.id not in distances:
+                    distances[other_attraction.id] = {}
+                r = requests.get(url=f'{bing_api.API_ENDPOINT}/Walking', params=params)
                 data = json.loads(r.content)
-                distance = data['resourceSets'][0]['resources'][0]['travelDistance']
-                distances[attraction.id][other_attraction.id] = distance
-                distance[other_attraction.id][attraction.id] = distance
+                try:
+                    distance = data['resourceSets'][0]['resources'][0]['travelDistance']
+                except Exception as e:
+                    pass
+                else:
+                    distances[attraction.id][other_attraction.id] = distance
+                    distances[other_attraction.id][attraction.id] = distance
         return distances
 

@@ -117,7 +117,8 @@ def explore():
         city=city,
         username=username,
         profile=profile,
-        days=days
+        days=days,
+        hotel=hotel_address
     )
     return make_response(response)
 
