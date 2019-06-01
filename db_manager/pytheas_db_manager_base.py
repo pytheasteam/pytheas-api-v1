@@ -44,6 +44,7 @@ class PytheasDBManagerBase:
     def get_explore_trips(self, city, username, profile, days):
         pass
 
-
-
+    @abstractmethod
+    def get_profile(self, username):
+        pass
 

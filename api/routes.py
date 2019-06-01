@@ -34,6 +34,7 @@ def entry():
 
 @app.route('/api')
 def api_index():
+    #  TODO: Replace with swagger
     db_manager.initialize()
     return 'api index'
 
@@ -78,27 +79,45 @@ def attractions():
 @app.route('/api/profile', methods=['POST', 'GET'])
 def profiles():
     if request.method == 'POST':
+        try:
+            token = request.headers.get('Authorization')
+            username = jwt.decode(token, SERVER_SECRET_KEY, algorithms=['HS256']).get('username')
+        except Exception as e:
+            return make_response('Unauthorized', 401)
         body = json.loads(request.data)
         response = db_manager.create_profile(
-            username=body.get('username'),
+            username=username,
             profile_name=body.get('name'),
             tags=body.get('tags')
         )
         return make_response(response)
-    response = db_manager.get_attractions()
+
+    #  GET Method Implementation
+    try:
+        token = request.headers.get('Authorization')
+        username = jwt.decode(token, SERVER_SECRET_KEY, algorithms=['HS256']).get('username')
+    except Exception as e:
+        return make_response('Unauthorized', 401)
+    response = db_manager.get_profile(username)
     return make_response(response)
 
 
 @app.route('/api/explore', methods=['GET'])
 def explore():
-    city = 'paris'
-    token = request.headers.get('Authorization').split(' ')[1]
-    username = jwt.decode(token, SERVER_SECRET_KEY, algorithms=['HS256'])
+    city = request.args.get('city')
+    hotel_address = request.args.get('hotel')
+    profile = request.args.get('profile')
+    days = request.args.get('days')
+    try:
+        token = request.headers.get('Authorization')
+        username = jwt.decode(token, SERVER_SECRET_KEY, algorithms=['HS256'])['username']
+    except:
+        return make_response('Unauthorized', 401)
     response = db_manager.get_explore_trips(
         city=city,
         username=username,
-        profile='art',
-        days=3
+        profile=profile,
+        days=days
     )
     return make_response(response)
 
@@ -121,9 +140,8 @@ def trip():
         pass
     else:
         try:
-            token = request.headers.get('Authorization').split(' ')[1]
+            token = request.headers.get('Authorization')
             username = jwt.decode(token, SERVER_SECRET_KEY, algorithms=['HS256'])
-            # username = 'userTest'
         except Exception as e:
             return make_response(f'Cannot find token in headers: {e}', 400)
         else:

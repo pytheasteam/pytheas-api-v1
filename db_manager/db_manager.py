@@ -1,8 +1,12 @@
+import json
 from datetime import datetime as dt, datetime
+
+import requests
 from flask import jsonify
 import jwt
 
 from agent.get_attractions_for_profile import agent_mock_call_stub
+from db_manager.config.agent_url import AGENT_ENDPOINT
 from db_manager.config.secrets import SERVER_SECRET_KEY
 from api.models.attraction import Attraction
 from api.models.city import City
@@ -16,6 +20,7 @@ from db_manager.pytheas_db_manager_base import PytheasDBManagerBase
 
 class SQLPytheasManager(PytheasDBManagerBase):
     # TODO: Refactor exceptions handling
+    # TODO: Replace DB to mys
 
     def __init__(self, db):
         super().__init__(db)
@@ -67,7 +72,7 @@ class SQLPytheasManager(PytheasDBManagerBase):
             )
             if status is not 200:
                 return new_user, status
-        return jwt.encode({'username': username}, SERVER_SECRET_KEY, algorithm='HS256').decode('utf-8'), 200
+        return jwt.encode({'username': username}, SERVER_SECRET_KEY, algorithm='HS256'), 200
 
     def create_tag(self, tag_name):
         return self._create(
@@ -109,15 +114,17 @@ class SQLPytheasManager(PytheasDBManagerBase):
             )
             self.db.session.add(new_profile)
             self.db.session.commit()
+
             # create tags
             for tag in tags:
                 db_tag = Tag.query.filter_by(name=tag).first()
-                new_profile_tag = ProfileTag(
-                    tag_id=db_tag.id,
-                    profile_id=new_profile.id
-                )
-                self.db.session.add(new_profile_tag)
-                self.db.session.commit()
+                if db_tag:
+                    new_profile_tag = ProfileTag(
+                        tag_id=db_tag.id,
+                        profile_id=new_profile.id
+                    )
+                    self.db.session.add(new_profile_tag)
+                    self.db.session.commit()
         except Exception as e:
             print(e)
             self.db.session.rollback()
@@ -162,6 +169,16 @@ class SQLPytheasManager(PytheasDBManagerBase):
             return "success", 200
 
     #  GET FUNCTIONS
+
+    def get_profile(self, username):
+        try:
+            user_id = User.query.filter_by(username=username).first().id
+            return jsonify({
+                        'profiles': UserProfile.query.filter_by(user_id=user_id).with_entities(UserProfile.id, UserProfile.name).all()
+                   }), 200
+        except Exception as e:
+            return f"Error getting user's profiles: {str(e)}", 500
+
     def get_cities(self):
         try:
             return self.serialize_result(City.query.all()), 200
@@ -243,25 +260,47 @@ class SQLPytheasManager(PytheasDBManagerBase):
         else:
             return jsonify(all_trips), 200
 
-    def get_explore_trips(self, city, username, profile, days):
+    def get_explore_trips(self, username, profile, days, city=None, hotel=None):
         try:
             user_id = User.query.filter_by(username=username).first().id
             profile_id = UserProfile.query.filter_by(user_id=user_id, name=profile).first().id
             city_id = City.query.filter_by(name=city).first().id
-            # TODO: Call the agent for getting the attractions
-            chosen_attractions = agent_mock_call_stub(profile_id, city_id)
+            agent_response = requests.get(url=AGENT_ENDPOINT, params={'profile_id': profile_id, 'city_id': city_id})
+            days = int(days)
+            if agent_response.status_code is not 200:
+                return agent_response.content, agent_response.status_code
+            agent_results = json.loads(agent_response.content)
+            # chosen_attractions = agent_mock_call_stub(profile_id, city_id)
             # TODO: Switch below section to trip builder strategy
-            chosen_attractions_by_days = []
-            for day in range(0, days):
-                chosen_attractions_by_days.append([])
-            for i, attraction in enumerate(chosen_attractions):
-                chosen_attractions_by_days[i % days].append(attraction)
-            trips = [{
-                'destination': city,
-                'days': days,
-                'places': chosen_attractions_by_days,
-                'number_of_places': len(chosen_attractions)
-            }]
+            trips = []
+            for result in agent_results:
+                city = City.query.filter_by(id=result['city_id']).first().name
+                attractions = result['attractions']['5']
+                attractions.extend(result['attractions']['4'])
+                chosen_attractions_by_days = []
+                for day in range(0, days):
+                    chosen_attractions_by_days.append([])
+                for i, attraction in enumerate(attractions):
+                    attraction_object = Attraction.query.filter_by(id=attraction).first()
+                    chosen_attractions_by_days[i % days].append(
+                        {
+                            'id': attraction_object.id,
+                            'name': attraction_object.name,
+                            'rate': attraction_object.rate,
+                            'address': attraction_object.address,
+                            'price': attraction_object.price,
+                            'description': attraction_object.description,
+                            'phone number': attraction_object.phone_number,
+                            'website': attraction_object.website,
+                            'city': City.query.get(attraction_object.city_id).name
+                        }
+                    )
+                trips = [{
+                    'destination': city,
+                    'days': days,
+                    'places': chosen_attractions_by_days,
+                    'number_of_places': len(attractions)
+                }]
             return jsonify(trips), 200
         except Exception as e:
             return str(e), 500
