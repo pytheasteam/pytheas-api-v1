@@ -5,7 +5,6 @@ import requests
 from flask import jsonify
 import jwt
 
-from agent.get_attractions_for_profile import agent_mock_call_stub
 from db_manager.config.agent_url import AGENT_ENDPOINT
 from db_manager.config.secrets import SERVER_SECRET_KEY
 from api.models.attraction import Attraction
@@ -22,7 +21,6 @@ from trip_builder.routes_builder.basic_route_builder import BasicRoutesBuilder
 
 class SQLPytheasManager(PytheasDBManagerBase):
     # TODO: Refactor exceptions handling
-    # TODO: Replace DB to mys
 
     def __init__(self, db):
         super().__init__(db)
@@ -74,7 +72,7 @@ class SQLPytheasManager(PytheasDBManagerBase):
             )
             if status is not 200:
                 return new_user, status
-        return jwt.encode({'username': username}, SERVER_SECRET_KEY, algorithm='HS256'), 200
+        return jsonify({"token": jwt.encode({'username': username}, SERVER_SECRET_KEY, algorithm='HS256').decode('utf8')}), 200
 
     def create_tag(self, tag_name):
         return self._create(
@@ -175,8 +173,9 @@ class SQLPytheasManager(PytheasDBManagerBase):
     def get_profile(self, username):
         try:
             user_id = User.query.filter_by(username=username).first().id
+            profiles = UserProfile.query.filter_by(user_id=user_id).with_entities(UserProfile.id, UserProfile.name).all()
             return jsonify({
-                        'profiles': UserProfile.query.filter_by(user_id=user_id).with_entities(UserProfile.id, UserProfile.name).all()
+                        'profiles': [{'id': profile.id, 'name': profile.name} for profile in profiles]
                    }), 200
         except Exception as e:
             return f"Error getting user's profiles: {str(e)}", 500
@@ -247,7 +246,7 @@ class SQLPytheasManager(PytheasDBManagerBase):
             all_trips = []
             for trip in trips:
                 parsed_trip = {
-                    'start_date': trip.start_date,
+                        'start_date': trip.start_date,
                     'end_date': trip.end_date,
                     'price': trip.price,
                     'is_booked': bool(trip.is_booked),
@@ -278,6 +277,7 @@ class SQLPytheasManager(PytheasDBManagerBase):
                 city = City.query.filter_by(id=result['city_id']).first().name
                 attractions = result['attractions']['5']
                 attractions.extend(result['attractions']['4'])
+                attractions.extend(result['attractions']['3'])
                 attractions = [Attraction.query.get(attraction_id) for attraction_id in attractions]
                 trips.append(
                     trip_builder.build_trip(days, attractions, city)

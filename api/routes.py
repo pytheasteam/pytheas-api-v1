@@ -27,7 +27,7 @@ def entry():
             full_name=body.get('full_name'),
             google_token=body.get('google_token')
         )
-    except:
+    except Exception as e:
         response = 'Invalid request', 400
     return make_response(response)
 
@@ -142,7 +142,7 @@ def trip():
     else:
         try:
             token = request.headers.get('Authorization')
-            username = jwt.decode(token, SERVER_SECRET_KEY, algorithms=['HS256'])
+            username = jwt.decode(token, SERVER_SECRET_KEY, algorithms=['HS256'])['username']
         except Exception as e:
             return make_response(f'Cannot find token in headers: {e}', 400)
         else:
