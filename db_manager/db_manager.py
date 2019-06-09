@@ -5,7 +5,7 @@ import requests
 from flask import jsonify
 import jwt
 
-from db_manager.config.agent_url import AGENT_ENDPOINT
+from db_manager.config.agent_url import AGENT_ENDPOINT, AGENT_ATTRACTION_GET, AGENT_TAGS_GET
 from db_manager.config.secrets import SERVER_SECRET_KEY
 from api.models.attraction import Attraction
 from api.models.city import City
@@ -17,7 +17,7 @@ from api.models.user_trip_profile import UserProfile, ProfileTag
 from db_manager.pytheas_db_manager_base import PytheasDBManagerBase
 from trip_builder.city_trip_builder import CityWalkTripBuilder
 from trip_builder.routes_builder.basic_route_builder import BasicRoutesBuilder
-
+from db_manager.location_code_matcher import LocationMatcher
 
 class SQLPytheasManager(PytheasDBManagerBase):
     # TODO: Refactor exceptions handling
@@ -261,13 +261,13 @@ class SQLPytheasManager(PytheasDBManagerBase):
         else:
             return jsonify(all_trips), 200
 
-    def get_explore_trips(self, username, profile, days, city=None, hotel=None):
+    def get_explore_trips(self, username, profile, from_date, to_date, city=None, hotel=None):
         try:
             user_id = User.query.filter_by(username=username).first().id
             profile_id = UserProfile.query.filter_by(user_id=user_id, name=profile).first().id
             city_id = City.query.filter_by(name=city).first().id
-            agent_response = requests.get(url=AGENT_ENDPOINT, params={'profile_id': profile_id, 'city_id': city_id})
-            days = int(days)
+            agent_response = requests.get(url=(AGENT_ENDPOINT+AGENT_ATTRACTION_GET), params={'profile_id': profile_id, 'city_id': city_id})
+            days = (to_date - from_date).days
             if agent_response.status_code is not 200:
                 return agent_response.content, agent_response.status_code
             agent_results = json.loads(agent_response.content)
@@ -295,3 +295,54 @@ class SQLPytheasManager(PytheasDBManagerBase):
             'profile_id': profile_id,
             'city_id': city_id
         }
+
+    def get_popular_tags(self):
+        try:
+            agent_response = requests.get(url=(AGENT_ENDPOINT+AGENT_TAGS_GET), params={})
+            if agent_response.status_code is not 200:
+                return agent_response.content, agent_response.status_code
+            agent_results = json.loads(agent_response.content)
+            tags = []
+            for result in agent_results:
+                id = result[0]
+                tag = result[1]
+                tags.append(
+                    {"id": id, "name": tag}
+                )
+            return jsonify(tags), 200
+        except Exception as e:
+            return str(e), 500
+
+    def get_flights_for_trip(self, from_city, to_city, from_date, to_date, travelers, max_stop_overs=0):
+        max_returned_values = 10
+        print(from_city)
+        print(to_city)
+        from_city = LocationMatcher.get_iata_for_city(from_city)
+        to_city = LocationMatcher.get_iata_for_city(to_city)
+        base_url = 'https://api.skypicker.com/flights?'
+        flight_url = base_url + 'flyFrom=' + from_city + '&to=' + to_city + '&dateFrom=' \
+                     + from_date + '&dateTo=' + to_date + '&partner=picky&flight_type=return&' \
+                     + 'max_stopovers=0'
+        print(flight_url)
+        try:
+            api_response = requests.get(url=flight_url, params={})
+            if api_response.status_code is not 200:
+                return api_response.content, api_response.status_code
+            api_results = json.loads(api_response.content)
+            flights = []
+            max_returned_values = min(max_returned_values, len(api_results['data']))
+            for i in range(max_returned_values):
+                flights.append(
+                    {
+                        "duration": api_results['data'][i]['fly_duration'],
+                        "air_line": api_results['data'][i]['airlines'][0],
+                        "price": api_results['data'][i]['price'],
+                        "departure_time": api_results['data'][i]['dTime'],
+                        "arrival_time": api_results['data'][i]['aTime'],
+                        "deep_ling": api_results['data'][i]['deep_link']
+                    }
+                )
+            return jsonify(flights), 200
+        except Exception as e:
+            return str(e), 500
+
