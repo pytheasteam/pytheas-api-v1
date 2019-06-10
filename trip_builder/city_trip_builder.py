@@ -32,13 +32,10 @@ class CityWalkTripBuilder(TripBuilderStrategyBase):
         # TODO: Check if there is enough attractions in attraction list.
         #  if there is more than duration * 6 -> takes the first duration * 6
         #  if there is less than duration * 6 -> return error
-        print('build_trip : 1')
+
         if self.attractions_distance is None or len(self.attractions_distance) is 0:
             self.attractions_distance = self._get_distances_between_attractions(attraction_list, self.route_type)
-        print('build_trip : 2')
         starting_point = hotel if hotel is not None else attraction_list.pop()
-        print('build_trip : 3')
-        print(starting_point)
         routes = self.route_builder.build_routes(
             number_of_routes=int(trip_duration),
             attraction_list=attraction_list,
@@ -64,20 +61,15 @@ class CityWalkTripBuilder(TripBuilderStrategyBase):
         :return: dictionary where the keys are attraction_id and value is the distances from attraction to other
         attractions in list
         """
-        print('_get_distances_between_attractions : 1')
+
         number_of_locations = 2  # Get location between 2 attractions each time
         distances = {}
         temp_attraction_list = list(attraction_list)
-        print('_get_distances_between_attractions : 2')
-        print(len(temp_attraction_list))
         while temp_attraction_list:
-            print('_get_distances_between_attractions : 3')
             attraction = temp_attraction_list.pop()
-            print(attraction)
             if attraction.id not in distances:
                 distances[attraction.id] = {}
             for other_attraction in temp_attraction_list:
-                print('_get_distances_between_attractions : 4')
                 params = {
                     'wayPoint.1': attraction.address,
                     'wayPoint.2': other_attraction.address,

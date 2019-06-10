@@ -264,53 +264,50 @@ class SQLPytheasManager(PytheasDBManagerBase):
 
     def get_explore_trips(self, username, profile, from_date, to_date, city=None):
         try:
-            #user_id = User.query.filter_by(username=username).first().id
-            #profile_id = UserProfile.query.filter_by(user_id=user_id, name=profile).first().id
-            profile_id = profile
+            user_id = User.query.filter_by(username=username).first().id
+            profile_id = UserProfile.query.filter_by(user_id=user_id, name=profile).first().id
+
             city_id = City.query.filter_by(name=city).first().id
             agent_response = requests.get(url=(AGENT_ENDPOINT+AGENT_ATTRACTION_GET), params={'profile_id': profile_id, 'city_id': city_id})
 
-            print('1')
+            estimated_attractions_per_day = 8
             fromdate = datetime.strptime(from_date, '%d/%m/%Y')
             todate = datetime.strptime(to_date, '%d/%m/%Y')
             days = (todate - fromdate).days
-            print('2')
+
             if agent_response.status_code is not 200:
                 return agent_response.content, agent_response.status_code
             agent_results = json.loads(agent_response.content)
+
             trips = []
             full_trips = []
-            print('3')
+
             for result in agent_results:
-                print('4')
                 city = City.query.filter_by(id=result['city_id']).first().name
                 hotels = self._get_hotels(city, from_date, to_date, '2')
                 flights = self._get_flights('tel aviv', city, from_date, to_date, travelers=2)
                 trip_builder = CityWalkTripBuilder(BasicRoutesBuilder())
-                print(flights)
 
                 attractions = result['attractions']['5']
-                #attractions.extend(result['attractions']['4'])
-                #attractions.extend(result['attractions']['3'])
+                if len(attractions) <= (days*estimated_attractions_per_day):
+                    attractions.extend(result['attractions']['4'])
+                if len(attractions) <= (days*estimated_attractions_per_day):
+                    attractions.extend(result['attractions']['3'])
                 attractions = [Attraction.query.get(attraction_id) for attraction_id in attractions]
-                print('5')
+
                 for hotel in hotels:
-                    print('6')
-                    print(hotel['address'])
                     trips.append({
                         'trip': trip_builder.build_trip(days, attractions, city, hotel),
                         'hotel': hotel
                     })
-                    print('7')
+
                 full_trips.append({
                     'city': city,
                     'flights': flights,
                     'trips': trips
                 })
-            print('8')
             return jsonify(full_trips), 200
         except Exception as e:
-            print('7')
             return str(e), 500
 
     def get_trip_config(self, city, username, profile):
@@ -376,7 +373,7 @@ class SQLPytheasManager(PytheasDBManagerBase):
             return str(e), 500
 
     def _get_hotels(self, city_name, from_date, to_date, travelers, rooms='1'):
-        max_returned_values = 2
+        max_returned_values = 3
 
         city_code = LocationMatcher.get_booking_code_for_city(city_name)
         from_date = datetime.strptime(from_date, '%d/%m/%Y')
@@ -386,7 +383,7 @@ class SQLPytheasManager(PytheasDBManagerBase):
         search_url = HOTELS_BASE_ENDPOINT + 'dest_ids=' + city_code + '&arrival_date=' \
                      + str(from_date.date()) + '&departure_date=' + str(to_date.date()) + '&guest_qty=' + travelers \
                      + '&room_qty=' + rooms
-        print(search_url)
+
         api_response = requests.get(url=search_url, headers=HOTELS_HEADER)
         if api_response.status_code is not 200:
             return api_response.content, api_response.status_code
