@@ -411,12 +411,12 @@ class SQLPytheasManager(PytheasDBManagerBase):
                     "url": row_data['url'],
                     "start_date": from_date.date(),
                     "end_date": to_date.date(),
-                    "room_type": "stab standard",
+                    "room_type": "",
                     "price_per_night": (float(row_data['price_breakdown']['gross_price']) / days),
                     "currency": row_data['price_breakdown']['currency'],
                     "address": address,
                     "main_photo_url": row_data['main_photo_url'].replace('square60', 'square350'),
-                    "facilities": ["stab 1", "stab2", "stab3"]
+                    "facilities": []
                 }
             )
         return hotels
