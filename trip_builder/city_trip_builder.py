@@ -11,19 +11,21 @@ MAX_KM_PER_DAY = MAX_HOURS_PER_DAY / 2
 
 class CityWalkTripBuilder(TripBuilderStrategyBase):
 
-    def __init__(self, route_builder_strategy, hotel=None):
+    def __init__(self, route_builder_strategy):
         # type: (RoutesBuilderStrategyBase, str) -> None
         self.route_type = bing_api.RouteType.WALKING
-        self.hotel = hotel
         self.route_builder = route_builder_strategy
+        self.attractions_distance = None
 
-    def build_trip(self, trip_duration, attraction_list, city):
+    def build_trip(self, trip_duration, attraction_list, city, hotel=None):
         # type: (int, list, str) -> list
         """
         Build trips for city walk based attractions
         best for Art, Families and friends
         :param trip_duration: trip duration in days (number)
         :param attraction_list:attraction list from agent
+        :param city: destination
+        :param hotel: trip hotel's  details
         :return: list of attractions sub lists. each sub list represent a day in a trip
         """
 
@@ -31,22 +33,18 @@ class CityWalkTripBuilder(TripBuilderStrategyBase):
         #  if there is more than duration * 6 -> takes the first duration * 6
         #  if there is less than duration * 6 -> return error
 
-        attractions_distance_dict = self._get_distances_between_attractions(attraction_list, self.route_type)
-        starting_point = self.hotel if self.hotel is not None else attraction_list.pop()
+        if self.attractions_distance is None or len(self.attractions_distance) is 0:
+            self.attractions_distance = self._get_distances_between_attractions(attraction_list, self.route_type)
+        starting_point = hotel if hotel is not None else attraction_list.pop()
         routes = self.route_builder.build_routes(
-            number_of_routes=trip_duration,
+            number_of_routes=int(trip_duration),
             attraction_list=attraction_list,
-            attraction_distance_dict=attractions_distance_dict,
+            attraction_distance_dict=self.attractions_distance,
             max_km_per_route=MAX_KM_PER_DAY,
-            starting_point=starting_point
-
+            starting_point=starting_point,
+            city=city
         )
-        return [{
-                    'destination': city,
-                    'days': trip_duration,
-                    'places': routes,
-                    'number_of_places': len(attraction_list)
-                }]
+        return routes
 
     @staticmethod
     def _get_distances_between_attractions(attraction_list, route_type):

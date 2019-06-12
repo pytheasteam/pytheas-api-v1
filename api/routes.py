@@ -103,49 +103,30 @@ def profiles():
     return make_response(response)
 
 
-@app.route('/api/explore_old', methods=['GET'])
-def explore_old():
-    city = request.args.get('city')
-    hotel_address = request.args.get('hotel')
-    profile = request.args.get('profile')
-    days = request.args.get('days')
-    try:
-        token = request.headers.get('Authorization')
-        username = jwt.decode(token, SERVER_SECRET_KEY, algorithms=['HS256'])['username']
-    except:
-        return make_response('Unauthorized', 401)
-    response = db_manager.get_explore_trips(
-        city=city,
-        username=username,
-        profile=profile,
-        days=days,
-        hotel=hotel_address
-    )
-    return make_response(response)
-
-
 @app.route('/api/explore', methods=['GET'])
 def explore():
     city = request.args.get('city')
-    #hotel_address = request.args.get('hotel')
     profile = request.args.get('profile')
     from_date = request.args.get('from')
     to_date = request.args.get('to')
+    travelers = request.args.get('travelers', 1)
+
     try:
         token = request.headers.get('Authorization')
         username = jwt.decode(token, SERVER_SECRET_KEY, algorithms=['HS256'])['username']
     except:
         return make_response('Unauthorized', 401)
+
     response = db_manager.get_explore_trips(
         city=city,
         username=username,
         profile=profile,
-        fromdate = from_date,
-        todate = to_date
-        #days=days,
-        #hotel=hotel_address
+        from_date=from_date,
+        to_date=to_date,
+        travelers=travelers
     )
     return make_response(response)
+
 
 @app.route('/api/explore_flight', methods=['GET'])
 def explore_flight():
@@ -157,16 +138,18 @@ def explore_flight():
     max_stop_overs = request.args.get('stopovers', 0)
 
     response = db_manager.get_flights_for_trip(from_city, to_city, from_date, to_date, travelers, max_stop_overs)
-    '''
-    response = db_manager.get_flights_for_trip(
-        from_city='tel aviv',
-        to_city='PAR',
-        from_date='18/8/2019',
-        to_date='23/8/2019',
-        travelers=0,
-        max_stop_overs=0
-    )
-    '''
+    return response
+
+
+@app.route('/api/explore_hotels', methods=['GET'])
+def explore_hotels():
+    city_name = request.args.get('city')
+    from_date = request.args.get('from_date')
+    to_date = request.args.get('to_date')
+    travelers = request.args.get('travelers', '1')
+    rooms = request.args.get('rooms', '1')
+
+    response = db_manager.get_hotels(city_name, from_date, to_date, travelers, rooms)
     return response
 
 
