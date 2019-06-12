@@ -18,20 +18,22 @@ class BasicRoutesBuilder(RoutesBuilderStrategyBase):
                     'description': attraction.description,
                     'phone number': attraction.phone_number,
                     'website': attraction.website,
-                    'city': City.query.get(attraction.city_id).name
+                    'city': City.query.get(attraction.city_id).name,
+                    'image_url': ''
                 }
 
     def _serialize_hotel(self, hotel, city):
         return {
-            'id': hotel['url'],
+            'id': -1,
             'name': hotel['name'],
             'rate': 5,
             'address': hotel['address'],
             'price': hotel['price_per_night'],
             'description': '',
             'phone number': '',
-            'website': '',
-            'city': city
+            'website': hotel['url'],
+            'city': city,
+            'image_url': ''
         }
 
     def build_routes(self, number_of_routes, attraction_list, attraction_distance_dict, max_km_per_route,

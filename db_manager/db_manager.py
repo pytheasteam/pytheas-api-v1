@@ -262,11 +262,11 @@ class SQLPytheasManager(PytheasDBManagerBase):
         else:
             return jsonify(all_trips), 200
 
-    def get_explore_trips(self, username, profile, from_date, to_date, city=None):
+    def get_explore_trips(self, username, profile, from_date, to_date, city=None, travelers='2'):
         try:
-            user_id = User.query.filter_by(username=username).first().id
-            profile_id = UserProfile.query.filter_by(user_id=user_id, name=profile).first().id
-
+            #user_id = User.query.filter_by(username=username).first().id
+            #profile_id = UserProfile.query.filter_by(user_id=user_id, name=profile).first().id
+            profile_id = profile
             city_id = City.query.filter_by(name=city).first().id
             agent_response = requests.get(url=(AGENT_ENDPOINT+AGENT_ATTRACTION_GET), params={'profile_id': profile_id, 'city_id': city_id})
 
@@ -280,33 +280,38 @@ class SQLPytheasManager(PytheasDBManagerBase):
             agent_results = json.loads(agent_response.content)
 
             trips = []
-            full_trips = []
-
             for result in agent_results:
                 city = City.query.filter_by(id=result['city_id']).first().name
-                hotels = self._get_hotels(city, from_date, to_date, '2')
-                flights = self._get_flights('tel aviv', city, from_date, to_date, travelers=2)
-                trip_builder = CityWalkTripBuilder(BasicRoutesBuilder())
 
+                flight_price = 0
+                flights = self._get_flights('tel aviv', city, from_date, to_date, travelers)
+                if flights is not None and len(flights) is not 0:
+                    flight_price = int(flights[0]["price"])
+                hotels = self._get_hotels(city, from_date, to_date, travelers)
+                trip_builder = CityWalkTripBuilder(BasicRoutesBuilder())
                 attractions = result['attractions']['5']
                 if len(attractions) <= (days*estimated_attractions_per_day):
                     attractions.extend(result['attractions']['4'])
                 if len(attractions) <= (days*estimated_attractions_per_day):
                     attractions.extend(result['attractions']['3'])
                 attractions = [Attraction.query.get(attraction_id) for attraction_id in attractions]
-
                 for hotel in hotels:
+                    price = int(flight_price) + (int(hotel["price_per_night"])*days) #need to convert currencies
                     trips.append({
-                        'trip': trip_builder.build_trip(days, attractions, city, hotel),
-                        'hotel': hotel
+                        'destination': city,
+                        'start_date': from_date,
+                        'end_date': to_date,
+                        'days': days,
+                        'price': price,
+                        'currency': 'USD',
+                        'people_number': travelers,
+                        'pictures': [],
+                        'flights': flights,
+                        'hotel': hotel,
+                        'places': trip_builder.build_trip(days, attractions, city, hotel)
                     })
 
-                full_trips.append({
-                    'city': city,
-                    'flights': flights,
-                    'trips': trips
-                })
-            return jsonify(full_trips), 200
+            return jsonify(trips), 200
         except Exception as e:
             return str(e), 500
 
@@ -339,7 +344,7 @@ class SQLPytheasManager(PytheasDBManagerBase):
 
 
     def _get_flights(self, from_city, to_city, from_date, to_date, travelers, max_stop_overs=0):
-        max_returned_values = 10
+        max_returned_values = 3
         from_city = LocationMatcher.get_iata_for_city(from_city)
         to_city = LocationMatcher.get_iata_for_city(to_city)
         flight_url = FLIGHTS_BASE_ENDPOINT + 'flyFrom=' + from_city + '&to=' + to_city + '&dateFrom=' \
@@ -381,7 +386,7 @@ class SQLPytheasManager(PytheasDBManagerBase):
         days = (to_date - from_date).days
 
         search_url = HOTELS_BASE_ENDPOINT + 'dest_ids=' + city_code + '&arrival_date=' \
-                     + str(from_date.date()) + '&departure_date=' + str(to_date.date()) + '&guest_qty=' + travelers \
+                     + str(from_date.date()) + '&departure_date=' + str(to_date.date()) + '&guest_qty=' + str(travelers) \
                      + '&room_qty=' + rooms
 
         api_response = requests.get(url=search_url, headers=HOTELS_HEADER)

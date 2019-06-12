@@ -109,6 +109,7 @@ def explore():
     profile = request.args.get('profile')
     from_date = request.args.get('from')
     to_date = request.args.get('to')
+    travelers = request.args.get('travelers', 1)
 
     try:
         token = request.headers.get('Authorization')
@@ -120,8 +121,9 @@ def explore():
         city=city,
         username=username,
         profile=profile,
-        from_date = from_date,
-        to_date = to_date
+        from_date=from_date,
+        to_date=to_date,
+        travelers=travelers
     )
     return make_response(response)
 

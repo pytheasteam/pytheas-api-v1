@@ -44,12 +44,7 @@ class CityWalkTripBuilder(TripBuilderStrategyBase):
             starting_point=starting_point,
             city=city
         )
-        return [{
-                    'destination': city,
-                    'days': trip_duration,
-                    'places': routes,
-                    'number_of_places': len(attraction_list)
-                }]
+        return routes
 
     @staticmethod
     def _get_distances_between_attractions(attraction_list, route_type):
