@@ -1,6 +1,6 @@
 from api.models.city import City
 from trip_builder.routes_builder.route_builder_strategy_base import RoutesBuilderStrategyBase
-
+from trip_builder.config.default_values import DEFAULT_IMAGE_URL
 
 class BasicRoutesBuilder(RoutesBuilderStrategyBase):
 
@@ -9,17 +9,18 @@ class BasicRoutesBuilder(RoutesBuilderStrategyBase):
         self.routes = []
 
     def _serialize_attraction(self, attraction):
+        image_url = DEFAULT_IMAGE_URL if attraction.photo_url is None or attraction.photo_url is '' else attraction.photo_url
         return {
-                    'id': attraction.id,
-                    'name': attraction.name,
-                    'rate': attraction.rate,
-                    'address': attraction.address,
-                    'price': attraction.price,
-                    'description': attraction.description,
-                    'phone number': attraction.phone_number,
-                    'website': attraction.website,
-                    'city': City.query.get(attraction.city_id).name,
-                    'image_url': ''
+                'id': attraction.id,
+                'name': attraction.name,
+                'rate': attraction.rate,
+                'address': attraction.address,
+                'price': attraction.price,
+                'description': attraction.description,
+                'phone number': attraction.phone_number,
+                'website': attraction.website,
+                'city': City.query.get(attraction.city_id).name,
+                'photo_url': image_url
                 }
 
     def _serialize_hotel(self, hotel, city):
@@ -33,7 +34,7 @@ class BasicRoutesBuilder(RoutesBuilderStrategyBase):
             'phone number': '',
             'website': hotel['url'],
             'city': city,
-            'image_url': ''
+            'photo_url': ''
         }
 
     def build_routes(self, number_of_routes, attraction_list, attraction_distance_dict, max_km_per_route,

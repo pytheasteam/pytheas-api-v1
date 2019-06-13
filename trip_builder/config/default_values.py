@@ -1,0 +1,1 @@
+DEFAULT_IMAGE_URL = 'https://cdn0.iconfinder.com/data/icons/travel-line-color-hipster-on-the-way/512/map-512.png'

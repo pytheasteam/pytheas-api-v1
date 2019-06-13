@@ -70,6 +70,13 @@ class Attraction(db.Model):
         backref=db.backref('attractions', lazy=True)
     )
 
+    photo_url = db.Column(
+        db.String(150),
+        index=False,
+        unique=False,
+        nullable=True
+    )
+
     tags = db.relationship('Tag', secondary='attractions_tags')
 
     def __repr__(self):
