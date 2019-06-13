@@ -77,6 +77,13 @@ class Attraction(db.Model):
         nullable=True
     )
 
+    suggested_duration = db.Column(
+        db.String(45),
+        index=False,
+        unique=False,
+        nullable=True
+    )
+
     tags = db.relationship('Tag', secondary='attractions_tags')
 
     def __repr__(self):

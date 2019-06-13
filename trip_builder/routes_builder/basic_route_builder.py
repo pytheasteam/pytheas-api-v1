@@ -20,7 +20,8 @@ class BasicRoutesBuilder(RoutesBuilderStrategyBase):
                 'phone number': attraction.phone_number,
                 'website': attraction.website,
                 'city': City.query.get(attraction.city_id).name,
-                'photo_url': image_url
+                'photo_url': image_url,
+                'suggested_duration': attraction.suggested_duration
                 }
 
     def _serialize_hotel(self, hotel, city):
@@ -34,7 +35,8 @@ class BasicRoutesBuilder(RoutesBuilderStrategyBase):
             'phone number': '',
             'website': hotel['url'],
             'city': city,
-            'photo_url': ''
+            'photo_url': '',
+            'suggested_duration': ''
         }
 
     def build_routes(self, number_of_routes, attraction_list, attraction_distance_dict, max_km_per_route,
