@@ -78,7 +78,8 @@ def attractions():
 
 
 @app.route('/api/profile', methods=['POST', 'GET'])
-def profiles():
+@app.route('/api/profile/<profile_id>', methods=['DELETE'])
+def profiles(profile_id=None):
     if request.method == 'POST':
         try:
             token = request.headers.get('Authorization')
@@ -92,6 +93,10 @@ def profiles():
             tags=body.get('tags')
         )
         return make_response(response)
+    if request.method == 'DELETE':
+        print(profile_id) # The profile we want to delete
+        # PUT your logics here or call to db_manager function
+        return make_response("LACHMI THE KING", 200)
 
     #  GET Method Implementation
     try:
