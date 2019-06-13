@@ -266,7 +266,7 @@ class SQLPytheasManager(PytheasDBManagerBase):
     def get_explore_trips(self, username, profile, from_date, to_date, city=None, travelers='2'):
         try:
             user_id = User.query.filter_by(username=username).first().id
-            profile_id = UserProfile.query.filter_by(user_id=user_id, name=profile).first().id
+            profile_id = UserProfile.query.filter_by(user_id=user_id, id=profile).first().id
             #profile_id = profile
             city_id = City.query.filter_by(name=city).first().id
             agent_response = requests.get(url=(AGENT_ENDPOINT+AGENT_ATTRACTION_GET), params={'profile_id': profile_id, 'city_id': city_id})
@@ -322,7 +322,7 @@ class SQLPytheasManager(PytheasDBManagerBase):
 
     def get_trip_config(self, city, username, profile):
         user_id = User.query.filter_by(username=username).first().id
-        profile_id = UserProfile.query.filter_by(user_id=user_id, name=profile).first().id
+        profile_id = UserProfile.query.filter_by(user_id=user_id, id=profile).first().id
         city_id = City.query.filter_by(name=city).first().id
         return {
             'user_id': user_id,
