@@ -267,7 +267,7 @@ class SQLPytheasManager(PytheasDBManagerBase):
         try:
             user_id = User.query.filter_by(username=username).first().id
             profile_id = UserProfile.query.filter_by(user_id=user_id, id=profile).first().id
-
+            #profile_id = profile
             city_id = City.query.filter_by(name=city).first()
             city_id = city_id.id if city_id is not None else None
             agent_response = requests.get(url=(AGENT_ENDPOINT+AGENT_ATTRACTION_GET), params={'profile_id': profile_id, 'city_id': city_id})
@@ -370,7 +370,9 @@ class SQLPytheasManager(PytheasDBManagerBase):
                     "price": api_results['data'][i]['price'],
                     "departure_time": api_results['data'][i]['dTime'],
                     "arrival_time": api_results['data'][i]['aTime'],
-                    "deep_ling": api_results['data'][i]['deep_link']
+                    "deep_ling": api_results['data'][i]['deep_link'],
+                    "from:": from_city,
+                    "to": to_city
                 }
             )
         return flights
