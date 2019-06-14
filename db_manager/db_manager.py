@@ -374,7 +374,7 @@ class SQLPytheasManager(PytheasDBManagerBase):
                     "departure_time": api_results['data'][i]['dTime'],
                     "arrival_time": api_results['data'][i]['aTime'],
                     "deep_ling": api_results['data'][i]['deep_link'],
-                    "from:" :from_city,
+                    "from:": from_city,
                     "to": to_city
                 }
             )
