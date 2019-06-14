@@ -270,8 +270,11 @@ class SQLPytheasManager(PytheasDBManagerBase):
             #profile_id = profile
             city_id = City.query.filter_by(name=city).first()
             city_id = city_id.id if city_id is not None else None
+            print(city_id)
             agent_response = requests.get(url=(AGENT_ENDPOINT+AGENT_ATTRACTION_GET), params={'profile_id': profile_id, 'city_id': city_id})
 
+            print(AGENT_ENDPOINT+AGENT_ATTRACTION_GET)
+            print({'profile_id': profile_id, 'city_id': city_id})
             estimated_attractions_per_day = 8
             fromdate = datetime.strptime(from_date, '%d/%m/%Y')
             todate = datetime.strptime(to_date, '%d/%m/%Y')
@@ -280,7 +283,7 @@ class SQLPytheasManager(PytheasDBManagerBase):
             if agent_response.status_code is not 200:
                 return agent_response.content, agent_response.status_code
             agent_results = json.loads(agent_response.content)
-
+            print(agent_results)
             trips = []
             for result in agent_results:
                 attractions = []
@@ -370,7 +373,9 @@ class SQLPytheasManager(PytheasDBManagerBase):
                     "price": api_results['data'][i]['price'],
                     "departure_time": api_results['data'][i]['dTime'],
                     "arrival_time": api_results['data'][i]['aTime'],
-                    "deep_ling": api_results['data'][i]['deep_link']
+                    "deep_ling": api_results['data'][i]['deep_link'],
+                    "from:" :from_city,
+                    "to": to_city
                 }
             )
         return flights
