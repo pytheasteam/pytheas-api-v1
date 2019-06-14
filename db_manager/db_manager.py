@@ -351,9 +351,9 @@ class SQLPytheasManager(PytheasDBManagerBase):
 
     def _get_flights(self, from_city, to_city, from_date, to_date, travelers, max_stop_overs=0):
         max_returned_values = 3
-        from_city = LocationMatcher.get_iata_for_city(from_city)
-        to_city = LocationMatcher.get_iata_for_city(to_city)
-        flight_url = FLIGHTS_BASE_ENDPOINT + 'flyFrom=' + from_city + '&to=' + to_city + '&dateFrom=' \
+        from_city_code = LocationMatcher.get_iata_for_city(from_city)
+        to_city_code = LocationMatcher.get_iata_for_city(to_city)
+        flight_url = FLIGHTS_BASE_ENDPOINT + 'flyFrom=' + from_city_code + '&to=' + to_city_code + '&dateFrom=' \
                      + from_date + '&dateTo=' + to_date + '&partner=picky&flight_type=return&' \
                      + 'max_stopovers=0'
         api_response = requests.get(url=flight_url, params={})
@@ -365,18 +365,18 @@ class SQLPytheasManager(PytheasDBManagerBase):
         for i in range(max_returned_values):
             flights.append(
                 {
-                    "duration": api_results['data'][i]['fly_duration'],
-                    "air_line": api_results['data'][i]['airlines'][0],
+                    "from_city:": from_city,
+                    "from_city_code:": from_city_code,
+                    "to_city": to_city,
+                    "to_city_code": to_city_code,
+                    "arrival_time": self._get_time_from_timestamp(api_results['data'][i]['aTime']),
+                    "departure_time": self._get_time_from_timestamp(api_results['data'][i]['dTime']),
                     "price": api_results['data'][i]['price'],
-                    "departure_time": api_results['data'][i]['dTime'],
-                    "arrival_time": api_results['data'][i]['aTime'],
-                    "deep_ling": api_results['data'][i]['deep_link'],
-                    "from:": from_city,
-                    "to": to_city
+                    "duration": api_results['data'][i]['fly_duration'],
+                    "link": api_results['data'][i]['deep_link']
                 }
             )
         return flights
-
 
     def get_flights_for_trip(self, from_city, to_city, from_date, to_date, travelers, max_stop_overs=0):
         try:
@@ -435,3 +435,7 @@ class SQLPytheasManager(PytheasDBManagerBase):
             return jsonify(hotels), 200
         except Exception as e:
             return str(e), 500
+
+    def _get_time_from_timestamp(self,timestamp):
+        dt = datetime.utcfromtimestamp(int(timestamp)).strftime('%H:%M')
+        return dt
