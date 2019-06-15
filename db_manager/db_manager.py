@@ -412,19 +412,22 @@ class SQLPytheasManager(PytheasDBManagerBase):
             address = str(row_data['address_trans']) + ',' + str(row_data['district']) + ',' + \
                       str(row_data['city_trans']) + ',' + str(row_data['zip']) + ',' + \
                       str(row_data['country_trans'])
+            stars = str(row_data['class']) if row_data['class']!=0 else 'Not Specified'
 
             hotels.append(
                 {
-                    "name": row_data['hotel_name'],
-                    "url": row_data['url'],
-                    "start_date": from_date.date(),
-                    "end_date": to_date.date(),
-                    "room_type": "",
-                    "price_per_night": (float(row_data['price_breakdown']['gross_price']) / days),
-                    "currency": row_data['price_breakdown']['currency'],
                     "address": address,
+                    "currency": row_data['price_breakdown']['currency'],
+                    "end_date": to_date.date(),
+                    "facilities": [],
                     "main_photo_url": row_data['main_photo_url'].replace('square60', 'square350'),
-                    "facilities": []
+                    "name": row_data['hotel_name'],
+                    "price_per_night": (float(row_data['price_breakdown']['gross_price']) / days),
+                    "room_type": "",
+                    "start_date": from_date.date(),
+                    "url": row_data['url'],
+                    "description": '',
+                    "stars": stars
                 }
             )
         return hotels
