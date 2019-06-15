@@ -11,7 +11,6 @@ db_manager = SQLPytheasManager(db)
 
 CORS(app, supports_credentials=True, resources={r'/*': {"origins": '*'}})
 
-
 @app.route('/')
 def index():
     return 'Server is running'
