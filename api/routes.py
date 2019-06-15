@@ -1,7 +1,7 @@
 import jwt
 from flask import request, make_response, json
 from flask import current_app as app
-from flask_cors import CORS
+from flask_cors import CORS, cross_origin
 from db_manager.config.secrets import SERVER_SECRET_KEY
 
 from db_manager.db_manager import SQLPytheasManager
@@ -19,6 +19,7 @@ def index():
 
 
 @app.route('/login', methods=['POST'])
+@cross_origin()
 def entry():
     try:
         body = json.loads(request.data)
