@@ -74,6 +74,7 @@ def attractions():
             city_id=body.get('city_id')
         )
         return make_response(response)
+        return make_response(response)
     response = db_manager.get_attractions()
     return make_response(response)
 
@@ -81,23 +82,28 @@ def attractions():
 @app.route('/api/profile', methods=['POST', 'GET'])
 @app.route('/api/profile/<profile_id>', methods=['DELETE'])
 def profiles(profile_id=None):
-    if request.method == 'POST':
+    response = ''
+    if request.method is not 'GET':
         try:
             token = request.headers.get('Authorization')
             username = jwt.decode(token, SERVER_SECRET_KEY, algorithms=['HS256']).get('username')
         except Exception as e:
             return make_response('Unauthorized', 401)
-        body = json.loads(request.data)
-        response = db_manager.create_profile(
-            username=username,
-            profile_name=body.get('name'),
-            tags=body.get('tags')
-        )
+
+        if request.method == 'POST':
+            body = json.loads(request.data)
+            response = db_manager.create_profile(
+                username=username,
+                profile_name=body.get('name'),
+                tags=body.get('tags')
+            )
+        if request.method == 'DELETE':
+            response = db_manager.delete_profile(
+                username=username,
+                profile_id=profile_id,
+            )
         return make_response(response)
-    if request.method == 'DELETE':
-        print(profile_id) # The profile we want to delete
-        # PUT your logics here or call to db_manager function
-        return make_response("LACHMI THE KING", 200)
+
 
     #  GET Method Implementation
     try:

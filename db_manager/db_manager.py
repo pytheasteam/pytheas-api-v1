@@ -6,7 +6,7 @@ from flask import jsonify
 import jwt
 
 from db_manager.config.agent_url import AGENT_ENDPOINT, AGENT_ATTRACTION_GET, AGENT_TAGS_GET
-from db_manager.config.secrets import SERVER_SECRET_KEY
+from db_manager.config.secrets import SERVER_SECRET_KEY, PROFILE_REMOVE_SP
 from db_manager.config.exteranl_apis import FLIGHTS_BASE_ENDPOINT, HOTELS_BASE_ENDPOINT, HOTELS_HEADER
 from db_manager.location_code_matcher import LocationMatcher
 from api.models.attraction import Attraction
@@ -440,6 +440,39 @@ class SQLPytheasManager(PytheasDBManagerBase):
         except Exception as e:
             return str(e), 500
 
+    #Delete functions
+
+    def delete_profile(self, username, profile_id):
+        try:
+            user = User.query.filter_by(username=username).first()
+            profile_id = UserProfile.query.filter_by(user_id=user.id, id=profile_id).first().id
+            self._exec_procedure(PROFILE_REMOVE_SP, [str(profile_id)])
+        except Exception as e:
+            print(e)
+            return "Error removing a profile", 500
+        return "success", 200
+
+    #Private functions
+
     def _get_time_from_timestamp(self,timestamp):
         dt = datetime.utcfromtimestamp(int(timestamp)).strftime('%H:%M')
         return dt
+
+    def _exec_procedure(self, procedure_name, params):
+        try:
+            params_conc = self._join(params, ',')
+            query = 'CALL ' + procedure_name + "(" + params_conc + ")"
+            results = self.db.session.execute(query, [])
+            self.db.session.commit()
+            return results
+        except Exception as e:
+            self.db.session.rollback()
+            print(e)
+            raise e
+
+    def _join(self, l, sep):
+        out_str = ''
+        for el in l:
+            out_str += '{}{}'.format(el, sep)
+        return out_str[:-len(sep)]
+
