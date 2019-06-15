@@ -1,1 +1,1 @@
-PYTHONPATH=${PWD} python api/app.py
+web: PYTHONPATH=${PWD} python api/app.py
