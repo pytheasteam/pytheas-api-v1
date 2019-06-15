@@ -314,6 +314,7 @@ class SQLPytheasManager(PytheasDBManagerBase):
                         'pictures': [],
                         'flights': flights,
                         'hotel': hotel,
+                        'explore': True,
                         'places': trip_builder.build_trip(days, attractions, city, hotel)
                     })
 
@@ -365,8 +366,8 @@ class SQLPytheasManager(PytheasDBManagerBase):
         for i in range(max_returned_values):
             flights.append(
                 {
-                    "from_city:": from_city,
-                    "from_city_code:": from_city_code,
+                    "from_city": from_city,
+                    "from_city_code": from_city_code,
                     "to_city": to_city,
                     "to_city_code": to_city_code,
                     "arrival_time": self._get_time_from_timestamp(api_results['data'][i]['aTime']),
