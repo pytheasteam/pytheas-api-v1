@@ -19,7 +19,6 @@ def index():
 
 
 @app.route('/login', methods=['POST'])
-@cross_origin()
 def entry():
     try:
         body = json.loads(request.data)
@@ -31,12 +30,7 @@ def entry():
         )
     except Exception as e:
         response = 'Invalid request', 400
-    resp = make_response(response)
-    resp.headers['Access-Control-Allow-Headers'] = 'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token,X-Requested-With,Access-Control-Allow-Origin'
-    resp.headers['Access-Control-Allow-Methods'] = 'POST,GET,OPTIONS,PUT'
-    resp.headers['Access-Control-Allow-Origin'] = '*'
-
-    return resp
+    return make_response(response)
 
 
 @app.route('/api')
