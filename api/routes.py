@@ -83,7 +83,7 @@ def attractions():
 @app.route('/api/profile/<profile_id>', methods=['DELETE'])
 def profiles(profile_id=None):
     response = ''
-    if request.method is not 'GET':
+    if request.method != 'GET':
         try:
             token = request.headers.get('Authorization')
             username = jwt.decode(token, SERVER_SECRET_KEY, algorithms=['HS256']).get('username')
@@ -103,7 +103,6 @@ def profiles(profile_id=None):
                 profile_id=profile_id,
             )
         return make_response(response)
-
 
     #  GET Method Implementation
     try:
