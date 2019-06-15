@@ -1,7 +1,7 @@
 import jwt
-from flask import request, make_response, json
+from flask import request, make_response, json, Response
 from flask import current_app as app
-from flask_cors import CORS
+from flask_cors import CORS, cross_origin
 from db_manager.config.secrets import SERVER_SECRET_KEY
 
 from db_manager.db_manager import SQLPytheasManager
@@ -9,7 +9,7 @@ from . import db
 
 db_manager = SQLPytheasManager(db)
 
-CORS(app, supports_credentials=True, resources={r'/*': {"origins": '*'}})
+CORS(app, supports_credentials=True, resources={r'/*': {"origins": '*', "headers": "*"}})
 app.config['CORS_HEADERS'] = 'Content-Type'
 
 
@@ -19,6 +19,7 @@ def index():
 
 
 @app.route('/login', methods=['POST'])
+@cross_origin()
 def entry():
     try:
         body = json.loads(request.data)
@@ -30,7 +31,12 @@ def entry():
         )
     except Exception as e:
         response = 'Invalid request', 400
-    return make_response(response)
+    resp = make_response(response)
+    resp.headers['Access-Control-Allow-Headers'] = 'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token,X-Requested-With,Access-Control-Allow-Origin'
+    resp.headers['Access-Control-Allow-Methods'] = 'POST,GET,OPTIONS,PUT'
+    resp.headers['Access-Control-Allow-Origin'] = '*'
+
+    return resp
 
 
 @app.route('/api')

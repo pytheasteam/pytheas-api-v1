@@ -1,1 +1,1 @@
-web: gunicorn app:api
+web: PYTHONPATH=${PWD} python api/app.py
