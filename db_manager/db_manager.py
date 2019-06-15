@@ -314,6 +314,7 @@ class SQLPytheasManager(PytheasDBManagerBase):
                         'pictures': [],
                         'flights': flights,
                         'hotel': hotel,
+                        'explore': True,
                         'places': trip_builder.build_trip(days, attractions, city, hotel)
                     })
 
