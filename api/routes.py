@@ -121,9 +121,8 @@ def explore():
     travelers = request.args.get('travelers', 1)
 
     try:
-        username ='user.test@example.com'
-        #token = request.headers.get('Authorization')
-        #username = jwt.decode(token, SERVER_SECRET_KEY, algorithms=['HS256'])['username']
+        token = request.headers.get('Authorization')
+        username = jwt.decode(token, SERVER_SECRET_KEY, algorithms=['HS256'])['username']
     except:
         return make_response('Unauthorized', 401)
 
@@ -188,4 +187,26 @@ def trip():
         else:
             response = db_manager.get_trips(username)
 
+    return make_response(response)
+
+
+@app.route('/api/profile_attraction', methods=['POST'])
+def profile_attraction():
+    body = json.loads(request.data)
+    profile = body.get('profile')
+    attraction = body.get('attraction')
+    rate = body.get('rate')
+
+    try:
+        token = request.headers.get('Authorization')
+        username = jwt.decode(token, SERVER_SECRET_KEY, algorithms=['HS256'])['username']
+    except:
+        return make_response('Unauthorized', 401)
+
+    response = db_manager.set_profile_attraction_rate(
+        username=username,
+        profile_id=profile,
+        attraction_id=attraction,
+        rate=rate
+    )
     return make_response(response)

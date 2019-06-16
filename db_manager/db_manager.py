@@ -184,6 +184,7 @@ class SQLPytheasManager(PytheasDBManagerBase):
             print(e)
             self.db.session.rollback()
             return "Error adding profile rate", 500
+        return "success", 200
 
     #  GET FUNCTIONS
 
