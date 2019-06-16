@@ -6,7 +6,7 @@ from flask import jsonify
 import jwt
 
 from db_manager.config.agent_url import AGENT_ENDPOINT, AGENT_ATTRACTION_GET, AGENT_TAGS_GET
-from db_manager.config.secrets import SERVER_SECRET_KEY, PROFILE_REMOVE_SP
+from db_manager.config.secrets import SERVER_SECRET_KEY, PROFILE_REMOVE_SP, PROFILE_RATE_SET_SP
 from db_manager.config.exteranl_apis import FLIGHTS_BASE_ENDPOINT, HOTELS_BASE_ENDPOINT, HOTELS_HEADER
 from db_manager.location_code_matcher import LocationMatcher
 from api.models.attraction import Attraction
@@ -170,6 +170,22 @@ class SQLPytheasManager(PytheasDBManagerBase):
         else:
             return "success", 200
 
+    def set_profile_attraction_rate(self, username, profile_id, attraction_id, rate):
+        try:
+            user_id = User.query.filter_by(username=username).first().id
+            profile_id = UserProfile.query.filter_by(user_id=user_id, id=profile_id).first().id
+
+            rate = int(rate)
+            if rate < 1 or rate > 5:
+                raise Exception("Rate is out of range")
+
+            self._exec_procedure(PROFILE_RATE_SET_SP, [str(profile_id), str(attraction_id), str(rate)])
+        except Exception as e:
+            print(e)
+            self.db.session.rollback()
+            return "Error adding profile rate", 500
+        return "success", 200
+
     #  GET FUNCTIONS
 
     def get_profile(self, username):
@@ -290,6 +306,7 @@ class SQLPytheasManager(PytheasDBManagerBase):
                 flights = self._get_flights('tel aviv', city, from_date, to_date, travelers)
                 if flights is not None and len(flights) is not 0:
                     flight_price = int(flights[0]["price"])
+
                 hotels = self._get_hotels(city, from_date, to_date, travelers)
                 trip_builder = CityWalkTripBuilder(BasicRoutesBuilder())
 
@@ -301,6 +318,7 @@ class SQLPytheasManager(PytheasDBManagerBase):
                     attractions.extend(result['attractions']['3'])
 
                 attractions = [Attraction.query.get(attraction_id) for attraction_id in attractions]
+
                 for hotel in hotels:
                     price = int(flight_price) + (int(hotel["price_per_night"])*days) #need to convert currencies
                     trips.append({
@@ -317,7 +335,6 @@ class SQLPytheasManager(PytheasDBManagerBase):
                         'explore': True,
                         'places': trip_builder.build_trip(days, attractions, city, hotel)
                     })
-
             return jsonify(trips), 200
         except Exception as e:
             return str(e), 500
@@ -387,7 +404,7 @@ class SQLPytheasManager(PytheasDBManagerBase):
             return str(e), 500
 
     def _get_hotels(self, city_name, from_date, to_date, travelers, rooms='1'):
-        max_returned_values = 3
+        max_returned_values = 2
 
         city_code = LocationMatcher.get_booking_code_for_city(city_name)
         from_date = datetime.strptime(from_date, '%d/%m/%Y')
