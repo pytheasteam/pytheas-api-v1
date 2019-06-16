@@ -3,6 +3,7 @@ import requests
 from trip_builder.routes_builder.route_builder_strategy_base import RoutesBuilderStrategyBase
 from trip_builder.trip_builder_strategy_base import TripBuilderStrategyBase
 from trip_builder.config import bing_api
+from datetime import datetime
 
 MAX_HOURS_PER_DAY = 8  # Hours
 KM_AVERAGE_WALKING_TIME = 0.25  # Hours
@@ -32,9 +33,15 @@ class CityWalkTripBuilder(TripBuilderStrategyBase):
         # TODO: Check if there is enough attractions in attraction list.
         #  if there is more than duration * 6 -> takes the first duration * 6
         #  if there is less than duration * 6 -> return error
-
+        first_time = datetime.now()
         if self.attractions_distance is None or len(self.attractions_distance) is 0:
             self.attractions_distance = self._get_distances_between_attractions(attraction_list, self.route_type)
+
+        second_time = datetime.now()
+        total_time = second_time - first_time
+        print('===-Total time for attractions distance: {:4.2f}'.format(total_time.total_seconds()))
+        first_time = datetime.now()
+
         starting_point = hotel if hotel is not None else attraction_list.pop()
         routes = self.route_builder.build_routes(
             number_of_routes=int(trip_duration),
@@ -44,6 +51,10 @@ class CityWalkTripBuilder(TripBuilderStrategyBase):
             starting_point=starting_point,
             city=city
         )
+        second_time = datetime.now()
+        total_time = second_time - first_time
+        print('===-Total time for building routs: {:4.2f}'.format(total_time.total_seconds()))
+        first_time = datetime.now()
         return routes
 
     @staticmethod
