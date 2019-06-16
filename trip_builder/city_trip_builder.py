@@ -13,13 +13,13 @@ MAX_KM_PER_DAY = MAX_HOURS_PER_DAY / 2
 class CityWalkTripBuilder(TripBuilderStrategyBase):
 
     def __init__(self, route_builder_strategy):
-        # type: (RoutesBuilderStrategyBase, str) -> None
+        # type: (RoutesBuilderStrategyBase) -> None
         self.route_type = bing_api.RouteType.WALKING
         self.route_builder = route_builder_strategy
         self.attractions_distance = None
 
     def build_trip(self, trip_duration, attraction_list, city, hotel=None):
-        # type: (int, list, str) -> list
+        # type: (int, list, str, str) -> list
         """
         Build trips for city walk based attractions
         best for Art, Families and friends

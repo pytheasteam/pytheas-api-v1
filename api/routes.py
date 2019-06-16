@@ -19,7 +19,6 @@ def index():
 
 
 @app.route('/login', methods=['POST'])
-@cross_origin()
 def entry():
     try:
         body = json.loads(request.data)
@@ -31,12 +30,7 @@ def entry():
         )
     except Exception as e:
         response = 'Invalid request', 400
-    resp = make_response(response)
-    resp.headers['Access-Control-Allow-Headers'] = 'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token,X-Requested-With,Access-Control-Allow-Origin'
-    resp.headers['Access-Control-Allow-Methods'] = 'POST,GET,OPTIONS,PUT'
-    resp.headers['Access-Control-Allow-Origin'] = '*'
-
-    return resp
+    return make_response(response)
 
 
 @app.route('/api')
@@ -54,7 +48,6 @@ def tags():
             tag_name=body.get('name')
         )
         return make_response(response)
-    #response = db_manager.get_tags()
     response = db_manager.get_popular_tags()
     return response
 
@@ -80,7 +73,6 @@ def attractions():
             city_id=body.get('city_id')
         )
         return make_response(response)
-        return make_response(response)
     response = db_manager.get_attractions()
     return make_response(response)
 
@@ -89,7 +81,7 @@ def attractions():
 @app.route('/api/profile/<profile_id>', methods=['DELETE'])
 def profiles(profile_id=None):
     response = ''
-    if request.method is not 'GET':
+    if request.method != 'GET':
         try:
             token = request.headers.get('Authorization')
             username = jwt.decode(token, SERVER_SECRET_KEY, algorithms=['HS256']).get('username')
@@ -109,7 +101,6 @@ def profiles(profile_id=None):
                 profile_id=profile_id,
             )
         return make_response(response)
-
 
     #  GET Method Implementation
     try:
