@@ -42,10 +42,17 @@ class RoutesBuilderStrategyBase:
         return CANNOT_CALCULATE_TIME_ERROR
 
     @abstractmethod
-    def build_routes(self, number_of_routes, attraction_list, attraction_distance_dict, max_km_per_route, starting_point):
-        # type: (int, list, dict, float, Attraction) -> list
+    def build_routes(self,
+                     number_of_routes,
+                     attraction_list,
+                     attraction_distance_dict,
+                     max_km_per_route,
+                     starting_point,
+                     city):
+        # type: (int, list, dict, float, Attraction, str) -> list
         """
         Build routes according to the build routes strategy
+        :param city: The city of trip
         :param number_of_routes: number of different wanted routes
         :param attraction_list: list of attractions that the routes will based on them
         :param max_km_per_route: max km between all the attractions in route

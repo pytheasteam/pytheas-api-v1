@@ -48,7 +48,6 @@ def tags():
             tag_name=body.get('name')
         )
         return make_response(response)
-    #response = db_manager.get_tags()
     response = db_manager.get_popular_tags()
     return response
 
@@ -73,7 +72,6 @@ def attractions():
             website=body.get('website', None),
             city_id=body.get('city_id')
         )
-        return make_response(response)
         return make_response(response)
     response = db_manager.get_attractions()
     return make_response(response)

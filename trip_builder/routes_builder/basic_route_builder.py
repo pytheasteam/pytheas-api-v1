@@ -2,6 +2,7 @@ from api.models.city import City
 from trip_builder.routes_builder.route_builder_strategy_base import RoutesBuilderStrategyBase
 from trip_builder.config.default_values import DEFAULT_IMAGE_URL
 
+
 class BasicRoutesBuilder(RoutesBuilderStrategyBase):
 
     def __init__(self):
