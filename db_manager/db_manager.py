@@ -19,6 +19,7 @@ from api.models.user_trip_profile import UserProfile, ProfileTag
 from db_manager.pytheas_db_manager_base import PytheasDBManagerBase
 from trip_builder.city_trip_builder import CityWalkTripBuilder
 from trip_builder.routes_builder.basic_route_builder import BasicRoutesBuilder
+from trip_builder.routes_builder.dfs_routes_builder import DFSRoutesBuilder
 
 
 class SQLPytheasManager(PytheasDBManagerBase):
@@ -291,7 +292,7 @@ class SQLPytheasManager(PytheasDBManagerBase):
                 if flights is not None and len(flights) is not 0:
                     flight_price = int(flights[0]["price"])
                 hotels = self._get_hotels(city, from_date, to_date, travelers)
-                trip_builder = CityWalkTripBuilder(BasicRoutesBuilder())
+                trip_builder = CityWalkTripBuilder(DFSRoutesBuilder())
 
                 if '5' in result['attractions']:
                     attractions = result['attractions']['5']

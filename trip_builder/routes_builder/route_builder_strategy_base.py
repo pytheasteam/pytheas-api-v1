@@ -3,10 +3,47 @@ from abc import ABCMeta, abstractmethod
 from api.models.attraction import Attraction
 from trip_builder.routes_builder.consts import CANNOT_CALCULATE_TIME_ERROR, ONLY_DIGIT_REGEX, \
     DURATION_IDENTIFIER_IN_DESCRIPTION
+from trip_builder.config.default_values import DEFAULT_IMAGE_URL
+from api.models.city import City
 
 
 class RoutesBuilderStrategyBase:
     __metaclass__ = ABCMeta
+
+    def serialize_hotel(self, hotel, city):
+        return {
+            'id': -1,
+            'name': hotel['name'],
+            'rate': 5,
+            'address': hotel['address'],
+            'price': hotel['price_per_night'],
+            'description': '',
+            'phone number': '',
+            'website': hotel['url'],
+            'city': city,
+            'photo_url': '',
+            'suggested_duration': ''
+        }
+
+    def serialize_attraction(self, attraction):
+        try:
+            image_url = DEFAULT_IMAGE_URL if attraction.photo_url is None or attraction.photo_url is '' else attraction.photo_url
+            return {
+                'id': attraction.id,
+                'name': attraction.name,
+                'rate': attraction.rate,
+                'address': attraction.address,
+                'price': attraction.price,
+                'description': attraction.description,
+                'phone number': attraction.phone_number,
+                'website': attraction.website,
+                'city': City.query.get(attraction.city_id).name,
+                'photo_url': image_url,
+                'suggested_duration': attraction.suggested_duration
+            }
+        except:
+            return {}
+
 
     @staticmethod
     def get_all_attractions_in_radius(pivot_attraction_id, attraction_distance_dict, radius):
@@ -18,7 +55,7 @@ class RoutesBuilderStrategyBase:
         :return: list of all attractions that in radius from pivot
         """
         neighbors = []
-        for potential_neighbor in attraction_distance_dict[pivot_attraction_id]:
+        for potential_neighbor in attraction_distance_dict:
             if attraction_distance_dict[potential_neighbor] <= radius:
                 neighbors.append(potential_neighbor)
         return list(set(neighbors))
@@ -49,7 +86,6 @@ class RoutesBuilderStrategyBase:
                      max_km_per_route,
                      starting_point,
                      city):
-        # type: (int, list, dict, float, Attraction, str) -> list
         """
         Build routes according to the build routes strategy
         :param city: The city of trip

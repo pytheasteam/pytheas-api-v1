@@ -1,6 +1,10 @@
 from api.models.attraction import Attraction
 from trip_builder.routes_builder.route_builder_strategy_base import RoutesBuilderStrategyBase
 
+MAX_ATTRACTIONS_PER_DAY = 5
+MAX_KM_PER_ROUTE = 5
+MAX_KM_PER_ATTRACTIONS = 3
+
 
 class DFSRoutesBuilder(RoutesBuilderStrategyBase):
 
@@ -9,37 +13,52 @@ class DFSRoutesBuilder(RoutesBuilderStrategyBase):
         self.routes = []
 
     def build_routes(self, number_of_routes, attraction_list, attraction_distance_dict, max_km_per_route,
-                     starting_point):
+                     starting_point, city):
         all_attractions = list(attraction_distance_dict.keys())
-        sorted_attraction = []
-        min_radius = 1
-        max_radius = 3
-        radius = min_radius
-        passed_attractions = []
+        radius = 1
+        selected_attractions = []
+        hotel = all_attractions[0] # Always the first attraction is the hotel
+        all_attractions = all_attractions[1:]
         while all_attractions and len(self.routes) < number_of_routes:
-            current_attraction = all_attractions.pop()
-            current_attraction_neighbors = self.get_all_attractions_in_radius(
-                current_attraction,
-                attraction_distance_dict,
-                radius
-            )
-            if current_attraction_neighbors:
-                sorted_attraction.append(current_attraction_neighbors)
-                all_attractions = [e for e in all_attractions if e not in current_attraction_neighbors]
-            else:
-                passed_attractions.append(current_attraction)
-            if not all_attractions and radius < max_radius:
-                all_attractions = passed_attractions
-                passed_attractions = []
-                radius += 1
-        return sorted_attraction
+            route, attraction_list = self.build_one_route(all_attractions, attraction_distance_dict, MAX_KM_PER_ROUTE, radius, hotel, [], selected_attractions)
+            selected_attractions.extend(route)
+            full_attraction_routes = [self.serialize_attraction(Attraction.query.get(attraction)) for attraction in route]
+            hotel_route = [self.serialize_hotel(starting_point.hotel, city)]
+            hotel_route.extend(full_attraction_routes)
+            self.routes.append(hotel_route)
+        return self.routes
 
-    def build_one_route(self, attraction_list, attraction_distance_dict, max_km_per_route, starting_point):
-        # type: (list, dict, int, Attraction) -> dict
-        total_time = 0
-        return {
-            'total_route_time': total_time
-        }
+    def build_one_route(self, attraction_list, attraction_distance_dict, max_km_per_route, radius, starting_point, route, selected_attractions):
+        next_attractions = self.get_all_attractions_in_radius(
+            starting_point,
+            attraction_distance_dict[starting_point],
+            radius
+        )
+        next_attractions = [attraction for attraction in next_attractions if attraction not in selected_attractions]
+        if not next_attractions and radius < MAX_KM_PER_ATTRACTIONS:
+            return self.build_one_route(
+                attraction_list,
+                attraction_distance_dict,
+                max_km_per_route,
+                radius+1,
+                starting_point,
+                route,
+                selected_attractions
+            )
+        if len(route) < MAX_ATTRACTIONS_PER_DAY:
+            next_attraction = next_attractions.pop()
+            while next_attraction in route:
+                if next_attractions:
+                    next_attraction = next_attractions.pop()
+                else:
+                    return route, attraction_list
+            try:
+                attraction_list.remove(next_attraction)
+            except:
+                pass
+            route.append(next_attraction)
+            self.build_one_route(attraction_list, attraction_distance_dict, max_km_per_route, radius, next_attraction, route, selected_attractions)
+        return route, attraction_list
 
 
 """

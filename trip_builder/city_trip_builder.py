@@ -9,6 +9,13 @@ KM_AVERAGE_WALKING_TIME = 0.25  # Hours
 MAX_KM_PER_DAY = MAX_HOURS_PER_DAY / 2
 
 
+class Hotel:
+    def __init__(self, hotel):
+        self.id = 'hotel'
+        self.address = hotel['address']
+        self.hotel = hotel
+
+
 class CityWalkTripBuilder(TripBuilderStrategyBase):
 
     def __init__(self, route_builder_strategy):
@@ -32,10 +39,10 @@ class CityWalkTripBuilder(TripBuilderStrategyBase):
         # TODO: Check if there is enough attractions in attraction list.
         #  if there is more than duration * 6 -> takes the first duration * 6
         #  if there is less than duration * 6 -> return error
-
+        starting_point = Hotel(hotel) if hotel is not None else attraction_list.pop()
+        attraction_list.append(starting_point)
         if self.attractions_distance is None or len(self.attractions_distance) is 0:
             self.attractions_distance = self._get_distances_between_attractions(attraction_list, self.route_type)
-        starting_point = hotel if hotel is not None else attraction_list.pop()
         routes = self.route_builder.build_routes(
             number_of_routes=int(trip_duration),
             attraction_list=attraction_list,
