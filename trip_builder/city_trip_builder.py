@@ -49,6 +49,7 @@ class CityWalkTripBuilder(TripBuilderStrategyBase):
         attraction_list.append(starting_point)
         if self.attractions_distance is None or len(self.attractions_distance) is 0:
             self.attractions_distance = self._get_distances_between_attractions(attraction_list, self.route_type)
+            print(self.attractions_distance)
         routes = self.route_builder.build_routes(
             number_of_routes=int(trip_duration),
             attraction_list=attraction_list,
@@ -89,6 +90,7 @@ class CityWalkTripBuilder(TripBuilderStrategyBase):
                     distance = R * c
                     distances[attraction][other_attraction] = distance
         print(datetime.datetime.now())
+        return distances
 
 
     @staticmethod

@@ -58,7 +58,9 @@ class RoutesBuilderStrategyBase:
         for potential_neighbor in attraction_distance_dict:
             if attraction_distance_dict[potential_neighbor] <= radius:
                 neighbors.append(potential_neighbor)
-        return list(set(neighbors))
+        neighbors = list(set(neighbors))
+        neighbors.sort(key=lambda x: attraction_distance_dict[x])
+        return neighbors
 
     @staticmethod
     def get_attraction_suggested_duration(attraction):
