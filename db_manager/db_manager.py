@@ -436,7 +436,8 @@ class SQLPytheasManager(PytheasDBManagerBase):
             city_id = None
             if city:
                 city_id = City.query.filter_by(name=city).first().id
-            budget = int(budget) if budget is not None else None
+            if budget:
+                budget = int(budget)
             agent_response = requests.get(url=(AGENT_ENDPOINT+AGENT_ATTRACTION_GET), params={'profile_id': profile_id, 'city_id': city_id})
             fromdate = datetime.strptime(from_date, '%d/%m/%Y')
             todate = datetime.strptime(to_date, '%d/%m/%Y')
