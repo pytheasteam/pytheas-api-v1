@@ -20,6 +20,7 @@ from api.models.hotel import Hotel, TripHotel
 from db_manager.pytheas_db_manager_base import PytheasDBManagerBase
 from trip_builder.city_trip_builder import CityWalkTripBuilder
 from trip_builder.routes_builder.basic_route_builder import BasicRoutesBuilder
+from trip_builder.routes_builder.dfs_routes_builder import DFSRoutesBuilder
 
 
 class SQLPytheasManager(PytheasDBManagerBase):
@@ -432,7 +433,7 @@ class SQLPytheasManager(PytheasDBManagerBase):
         try:
             user_id = User.query.filter_by(username=username).first().id
             profile_id = UserProfile.query.filter_by(user_id=user_id, id=profile).first().id
-            city_id = City.query.filter_by(name=city).first().id
+            city_id = City.query.filter_by(name=city).first().id if city is not None else None
             budget = int(budget) if budget is not None else None
             agent_response = requests.get(url=(AGENT_ENDPOINT+AGENT_ATTRACTION_GET), params={'profile_id': profile_id, 'city_id': city_id})
 
@@ -470,7 +471,7 @@ class SQLPytheasManager(PytheasDBManagerBase):
                 if len(attractions) < estimated_requiired_attractions:
                     return trips
 
-                trip_builder = CityWalkTripBuilder(BasicRoutesBuilder())
+                trip_builder = CityWalkTripBuilder(DFSRoutesBuilder())
                 attractions = [Attraction.query.get(attraction_id) for attraction_id in attractions]
                 for hotel in hotels:
                     price = int(flight_price) + (int(hotel["price_per_night"])*days) #need to convert currencies

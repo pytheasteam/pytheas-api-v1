@@ -45,7 +45,7 @@ class DFSRoutesBuilder(RoutesBuilderStrategyBase):
                 route,
                 selected_attractions
             )
-        if len(route) < MAX_ATTRACTIONS_PER_DAY:
+        if len(route) < MAX_ATTRACTIONS_PER_DAY and len(next_attractions) > 0:
             next_attraction = next_attractions.pop()
             while next_attraction in route:
                 if next_attractions:
