@@ -433,7 +433,9 @@ class SQLPytheasManager(PytheasDBManagerBase):
         try:
             user_id = User.query.filter_by(username=username).first().id
             profile_id = UserProfile.query.filter_by(user_id=user_id, id=profile).first().id
-            city_id = City.query.filter_by(name=city).first().id if city is not None else None
+            city_id = None
+            if city:
+                city_id = City.query.filter_by(name=city).first().id
             budget = int(budget) if budget is not None else None
             agent_response = requests.get(url=(AGENT_ENDPOINT+AGENT_ATTRACTION_GET), params={'profile_id': profile_id, 'city_id': city_id})
 
