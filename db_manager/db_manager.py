@@ -455,10 +455,10 @@ class SQLPytheasManager(PytheasDBManagerBase):
 
                 flight_price = 0
                 flights = self._get_flights('tel aviv', city, from_date, to_date, travelers)
-                if flights is not None and len(flights) > 0:
+                if flights is not None and len(flights) > 0 and flights[1] is not 502:
                     flight_price = int(flights[0]["price"])
                 else:
-                    return jsonify(trips), 404
+                    return jsonify(trips), flights[1]
 
                 hotels = self._get_hotels(city, from_date, to_date, travelers)
                 if hotels is None or len(hotels) == 0:
