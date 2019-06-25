@@ -1,6 +1,7 @@
 from .attraction import Attraction
 from .city import City
 from .user import User
+from .user_trip_profile import UserProfile
 
 from .. import db
 
@@ -19,6 +20,39 @@ class Trip(db.Model):
         nullable=False
     )
 
+    profile_id = db.Column(
+        db.Integer,
+        db.ForeignKey('user_profile.id'),
+        nullable=False
+    )
+
+    currency = db.Column(
+        db.String(100),
+        index=False,
+        unique=False,
+        nullable=True
+    )
+
+    price = db.Column(
+        db.Integer,
+        index=False,
+        unique=False,
+        nullable=True
+    )
+
+    days = db.Column(
+        db.Integer,
+        index=False,
+        unique=False,
+        nullable=True
+    )
+
+    city_id = db.Column(
+        db.Integer,
+        db.ForeignKey('cities.id'),
+        nullable=False
+    )
+
     start_date = db.Column(
         db.Date,
         index=False,
@@ -33,23 +67,17 @@ class Trip(db.Model):
         nullable=True
     )
 
-    price = db.Column(
-        db.Float,
-        index=False,
-        unique=False,
-        nullable=True
-    )
-
     is_booked = db.Column(
-        db.Boolean,
+        db.Integer,
         index=False,
         unique=False,
         nullable=False
     )
 
-    city_id = db.Column(
-        db.Integer,
-        db.ForeignKey('cities.id'),
+    people_number = db.Column(
+        db.Boolean,
+        index=False,
+        unique=False,
         nullable=False
     )
 
@@ -70,6 +98,11 @@ class Trip(db.Model):
 
     user = db.relationship(
         User,
+        backref=db.backref('trips', cascade="all, delete, delete-orphan")
+    )
+
+    profile = db.relationship(
+        UserProfile,
         backref=db.backref('trips', cascade="all, delete, delete-orphan")
     )
 

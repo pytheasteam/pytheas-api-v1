@@ -6,7 +6,7 @@ from flask import jsonify
 import jwt
 
 from db_manager.config.agent_url import AGENT_ENDPOINT, AGENT_ATTRACTION_GET, AGENT_TAGS_GET
-from db_manager.config.secrets import SERVER_SECRET_KEY, PROFILE_REMOVE_SP, PROFILE_RATE_SET_SP
+from db_manager.config.secrets import SERVER_SECRET_KEY, PROFILE_REMOVE_SP, PROFILE_RATE_SET_SP, TRIP_UPDATE_RSRV_SP
 from db_manager.config.exteranl_apis import FLIGHTS_BASE_ENDPOINT, HOTELS_BASE_ENDPOINT, HOTELS_HEADER
 from db_manager.location_code_matcher import LocationMatcher
 from api.models.attraction import Attraction
@@ -16,6 +16,7 @@ from api.models.tag_attraction import TagAttraction
 from api.models.trip import Trip, TripAttraction
 from api.models.user import User
 from api.models.user_trip_profile import UserProfile, ProfileTag
+from api.models.hotel import Hotel, TripHotel
 from db_manager.pytheas_db_manager_base import PytheasDBManagerBase
 from trip_builder.city_trip_builder import CityWalkTripBuilder
 from trip_builder.routes_builder.basic_route_builder import BasicRoutesBuilder
@@ -134,35 +135,130 @@ class SQLPytheasManager(PytheasDBManagerBase):
         else:
             return "success", 200
 
-    def create_trip(self, username, start_date, end_date, price, flight, hotel, explore_trip):
+    def upsert_trip(self, username, profile_id, flight_rsrv, hotel_rsrv, trip_data):
+        trip_id = int(trip_data['id'])
+        trip = None
+        if trip_id is not None and trip_id > 0:
+            trip = Trip.query.filter_by(id=trip_id).first()
+
+        if trip is None:
+            return self.create_trip(username, profile_id, flight_rsrv, hotel_rsrv, trip_data)
+        else:
+            return self.update_trip(username, profile_id, trip_id, flight_rsrv, hotel_rsrv)
+
+    def create_trip(self, username, profile_id, flight_rsrv, hotel_rsrv, trip_data):
         try:
-            user = User.query.filter_by(username=username).first()
-            city = City.query.filter_by(name=explore_trip['destination']).first()
-            start_date = datetime.strptime(start_date, '%Y-%m-%d')
-            end_date = datetime.strptime(end_date, '%Y-%m-%d')
-            if flight is None and hotel is None:
+            user_id = User.query.filter_by(username=username).first().id
+            profile_id = UserProfile.query.filter_by(user_id=user_id, id=profile_id).first().id
+            if profile_id is None:
+                raise
+
+            city_id = City.query.filter_by(name=trip_data['destination']).first().id
+            if flight_rsrv is None or hotel_rsrv is None:
                 is_booked = False
             else:
                 is_booked = True
+
             new_trip = Trip(
-                user_id=user.id,
-                start_date=start_date,
-                end_date=end_date,
-                price=price,
+                user_id=user_id,
+                profile_id=profile_id,
+                currency=trip_data['currency'],
+                price=int(trip_data['price']),
+                days=int(trip_data['days']),
+                start_date=datetime.strptime(trip_data['start_date'], '%d/%m/%Y'),
+                end_date=datetime.strptime(trip_data['end_date'], '%d/%m/%Y'),
                 is_booked=is_booked,
-                city_id=city.id
+                people_number=int(trip_data['people_number']),
+                city_id=city_id,
+                flight_rsrv=flight_rsrv,
+                hotel_rsrv=hotel_rsrv
             )
             self.db.session.add(new_trip)
             self.db.session.commit()
-            for day in range(explore_trip['days']):
-                for attraction in explore_trip['places'][day]:
+
+            self._add_trip_attractions(trip_data, new_trip)
+            self._create_hotel(new_trip.id, trip_data['hotel'])
+        except Exception as e:
+            print(e)
+            self.db.session.rollback()
+            return "Error creating new profile", 500
+        else:
+            return "success", 200
+
+    def _add_trip_attractions(self, trip_full_data, trip):
+        try:
+            for day in range(0, len(trip_full_data['places'])):
+                for i in range(1, len(trip_full_data['places'][day])):
+                    attraction = trip_full_data['places'][day][i]
                     new_trip_attraction = TripAttraction(
-                        trip_id=new_trip.id,
+                        trip_id=trip.id,
                         attraction_id=attraction['id'],
                         day=day + 1
                     )
                     self.db.session.add(new_trip_attraction)
                     self.db.session.commit()
+        except Exception as e:
+            print(e)
+            self.db.session.rollback()
+            raise
+
+    def _create_hotel(self, trip_id, hotel_data):
+        hotel_id = 0
+        hotel_name = hotel_data['name']
+        hotel_url = hotel_data['url']
+        hotel = Hotel.query.filter_by(name=hotel_name, url=hotel_url).first()
+        if hotel is None:
+            new_hotel = Hotel(
+                name=hotel_name,
+                address=hotel_data['address'],
+                main_photo_url=hotel_data['main_photo_url'],
+                stars=hotel_data['stars'],
+                url=hotel_url,
+                description=hotel_data['description'],
+                facilities=""
+            )
+            self.db.session.add(new_hotel)
+            self.db.session.commit()
+            hotel_id = new_hotel.id
+        else:
+            hotel_id = hotel.id
+
+        #Insert trip-hotel
+        new_trip_hotel = TripHotel(
+            trip_id=trip_id,
+            hotel_id=hotel_id,
+            start_date=hotel_data['start_date'],
+            end_date=hotel_data['end_date'],
+            price_per_night=int(hotel_data['price_per_night']),
+            room_type=hotel_data['room_type'],
+            currency=hotel_data['currency'],
+        )
+        self.db.session.add(new_trip_hotel)
+        self.db.session.commit()
+
+    def update_trip(self, username, profile_id, trip_id, flight_rsrv, hotel_rsrv):
+        try:
+            user_id = User.query.filter_by(username=username).first().id
+            profile_id = UserProfile.query.filter_by(user_id=user_id, id=profile_id).first().id
+            if profile_id is None:
+                raise Exception("No Profile found")
+
+            trip = Trip.query.filter_by(id=trip_id, profile_id=profile_id).first()
+            if trip is None:
+                raise Exception("No trip found")
+
+            trip.flight_rsrv = flight_rsrv if flight_rsrv is not None and flight_rsrv != '' else trip.flight_rsrv
+            trip.hotel_rsrv = hotel_rsrv if hotel_rsrv is not None and hotel_rsrv != '' else trip.hotel_rsrv
+            if trip.flight_rsrv is not None and trip.flight_rsrv != '':
+                trip.flight_rsrv = "'" + trip.flight_rsrv + "'"
+            if trip.hotel_rsrv is not None and trip.hotel_rsrv != '':
+                trip.hotel_rsrv = "'" + trip.hotel_rsrv + "'"
+
+            is_booked = False if trip.flight_rsrv is None or trip.hotel_rsrv is None else True
+
+            params = [trip_id, trip.flight_rsrv, trip.hotel_rsrv, is_booked]
+            self._exec_procedure(TRIP_UPDATE_RSRV_SP, params)
+            self.db.session.commit()
         except Exception as e:
             print(e)
             self.db.session.rollback()
@@ -264,7 +360,7 @@ class SQLPytheasManager(PytheasDBManagerBase):
             all_trips = []
             for trip in trips:
                 parsed_trip = {
-                        'start_date': trip.start_date,
+                    'start_date': trip.start_date,
                     'end_date': trip.end_date,
                     'price': trip.price,
                     'is_booked': bool(trip.is_booked),
@@ -283,9 +379,7 @@ class SQLPytheasManager(PytheasDBManagerBase):
         try:
             user_id = User.query.filter_by(username=username).first().id
             profile_id = UserProfile.query.filter_by(user_id=user_id, id=profile).first().id
-            #profile_id = profile
             city_id = City.query.filter_by(name=city).first()
-            city_id = city_id.id if city_id is not None else None
             agent_response = requests.get(url=(AGENT_ENDPOINT+AGENT_ATTRACTION_GET), params={'profile_id': profile_id, 'city_id': city_id})
 
             estimated_attractions_per_day = 8
@@ -322,6 +416,7 @@ class SQLPytheasManager(PytheasDBManagerBase):
                 for hotel in hotels:
                     price = int(flight_price) + (int(hotel["price_per_night"])*days) #need to convert currencies
                     trips.append({
+                        'id': -1,
                         'destination': city,
                         'start_date': from_date,
                         'end_date': to_date,
@@ -478,6 +573,7 @@ class SQLPytheasManager(PytheasDBManagerBase):
     def _exec_procedure(self, procedure_name, params):
         try:
             params_conc = self._join(params, ',')
+            print(params_conc)
             query = 'CALL ' + procedure_name + "(" + params_conc + ")"
             results = self.db.session.execute(query, [])
             self.db.session.commit()
@@ -490,6 +586,8 @@ class SQLPytheasManager(PytheasDBManagerBase):
     def _join(self, l, sep):
         out_str = ''
         for el in l:
+            if el is None:
+                el = 'Null'
             out_str += '{}{}'.format(el, sep)
         return out_str[:-len(sep)]
 
