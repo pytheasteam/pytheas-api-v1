@@ -329,10 +329,23 @@ class SQLPytheasManager(PytheasDBManagerBase):
             self.db.session.rollback()
             return f"Error adding tag to attractions: {str(e)}", 500
 
-    def get_trip_attraction(self, trip_id):
+    def get_trip_attraction(self, trip_id, hotel, city_name):
         attractions_trip = TripAttraction.query.filter_by(trip_id=trip_id)
         parsed_attractions = []
         day = -1
+        parsed_hotel = {
+            'id': -1,
+            'name': hotel['name'],
+            'rate': 5,
+            'address': hotel['address'],
+            'price': hotel['price_per_night'],
+            'description': '',
+            'phone number': '',
+            'website': hotel['url'],
+            'city': city_name,
+            'photo_url': hotel['main_photo_url'],
+            'suggested_duration': ''
+        }
         for attraction_trip in attractions_trip:
             attraction = Attraction.query.get(attraction_trip.attraction_id)
             parsed_attraction = {
@@ -344,14 +357,39 @@ class SQLPytheasManager(PytheasDBManagerBase):
                 'description': attraction.description,
                 'phone number': attraction.phone_number,
                 'website': attraction.website,
-                'city': City.query.get(attraction.city_id).name
+                'city': City.query.get(attraction.city_id).name,
+                'photo_url': attraction.photo_url,
+                'suggested_duration': attraction.suggested_duration
             }
             if (attraction_trip.day - 1) is not day:
-                parsed_attractions.append([parsed_attraction])
+                parsed_attractions.append([parsed_hotel])
                 day += 1
-            else:
-                parsed_attractions[day].append(parsed_attraction)
+            parsed_attractions[day].append(parsed_attraction)
         return parsed_attractions
+
+    def get_trip_hotel(self, trip_id):
+        print(trip_id)
+        trip_hotel = TripHotel.query.filter_by(trip_id=trip_id).first()
+        if trip_hotel is None:
+            return None
+        hotel_data = Hotel.query.filter_by(id=trip_hotel.hotel_id).first()
+        if hotel_data is None:
+            return None
+        hotel = {
+            "address": hotel_data.address,
+            "currency": trip_hotel.currency,
+            "end_date": trip_hotel.end_date,
+            "facilities": [],
+            "main_photo_url": hotel_data.main_photo_url,
+            "name": hotel_data.name,
+            "price_per_night": trip_hotel.price_per_night,
+            "room_type": trip_hotel.room_type,
+            "start_date": trip_hotel.start_date,
+            "url": hotel_data.url,
+            "description": hotel_data.description,
+            "stars": hotel_data.stars
+        }
+        return hotel
 
     def get_trips(self, username):
         try:
@@ -359,15 +397,27 @@ class SQLPytheasManager(PytheasDBManagerBase):
             trips = Trip.query.filter_by(user_id=user_id)
             all_trips = []
             for trip in trips:
+                city_name = City.query.get(trip.city_id).name
+                hotel = self.get_trip_hotel(trip.id)
+                if hotel is None:
+                    continue
+                attractions = self.get_trip_attraction(trip.id, hotel, city_name)
                 parsed_trip = {
+                    'id': trip.id,
+                    'destination': city_name,
                     'start_date': trip.start_date,
                     'end_date': trip.end_date,
+                    'days': trip.days,
                     'price': trip.price,
-                    'is_booked': bool(trip.is_booked),
-                    'city': City.query.get(trip.city_id).name,
-                    'flight': trip.flight_rsrv,
-                    'hotel': trip.hotel_rsrv,
-                    'places': self.get_trip_attraction(trip.id)
+                    'currency': trip.currency,
+                    'people_number': int(trip.people_number),
+                    'pictures': [],
+                    'flights': [],
+                    'hotel': hotel,
+                    'explore': not trip.is_booked,
+                    'places': attractions,
+                    'flight_rsrv': trip.flight_rsrv,
+                    'hotel_rsrv': trip.hotel_rsrv
                 }
                 all_trips.append(parsed_trip)
         except Exception as e:
@@ -428,7 +478,9 @@ class SQLPytheasManager(PytheasDBManagerBase):
                         'flights': flights,
                         'hotel': hotel,
                         'explore': True,
-                        'places': trip_builder.build_trip(days, attractions, city, hotel)
+                        'places': trip_builder.build_trip(days, attractions, city, hotel),
+                        'flight_rsrv': None,
+                        'hotel_rsrv': None
                     })
             return jsonify(trips), 200
         except Exception as e:
