@@ -1,6 +1,7 @@
 import datetime
 import json
 import math
+import os
 
 import requests
 from trip_builder.routes_builder.route_builder_strategy_base import RoutesBuilderStrategyBase
@@ -64,7 +65,7 @@ class CityWalkTripBuilder(TripBuilderStrategyBase):
     def _get_distances_between_attractions(attraction_list, route_type):
         distances = {}
         attraction_coord = {}  # { id: { lat: lng: } }
-        google = googlemaps.Client(key=KEY)
+        google = googlemaps.Client(key=os.environ.get('GOOGLE_API', KEY))
         print(datetime.datetime.now())
         for attraction in attraction_list:
             res = google.geocode(attraction.address)
