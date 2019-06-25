@@ -458,11 +458,11 @@ class SQLPytheasManager(PytheasDBManagerBase):
                 if flights is not None and len(flights) > 0 and flights[1] is not 502:
                     flight_price = int(flights[0]["price"])
                 else:
-                    return jsonify(trips), flights[1]
+                    continue
 
                 hotels = self._get_hotels(city, from_date, to_date, travelers)
                 if hotels is None or len(hotels) == 0:
-                    return jsonify(trips), 404
+                    continue
 
                 if '5' in result['attractions']:
                     attractions = result['attractions']['5']
@@ -470,8 +470,12 @@ class SQLPytheasManager(PytheasDBManagerBase):
                     attractions.extend(result['attractions']['4'])
                 if '3'in result['attractions'] and len(attractions) <= estimated_requiired_attractions:
                     attractions.extend(result['attractions']['3'])
-                if len(attractions) < estimated_requiired_attractions:
-                    return jsonify(trips), 404
+                if '2'in result['attractions'] and len(attractions) <= estimated_requiired_attractions:
+                    attractions.extend(result['attractions']['2'])
+                if '1'in result['attractions'] and len(attractions) <= estimated_requiired_attractions:
+                    attractions.extend(result['attractions']['1'])
+                if len(attractions) < estimated_requiired_attractions*0.8:
+                    continue
 
                 trip_builder = CityWalkTripBuilder(DFSRoutesBuilder())
                 attractions = [Attraction.query.get(attraction_id) for attraction_id in attractions]
@@ -527,34 +531,39 @@ class SQLPytheasManager(PytheasDBManagerBase):
         except Exception as e:
             return str(e), 500
 
-    def _get_flights(self, from_city, to_city, from_date, to_date, travelers, max_stop_overs=0):
+    def _get_flights(self, from_city, to_city, from_date, to_date, travelers, max_stop_overs=3):
         max_returned_values = 3
         from_city_code = LocationMatcher.get_iata_for_city(from_city)
         to_city_code = LocationMatcher.get_iata_for_city(to_city)
-        flight_url = FLIGHTS_BASE_ENDPOINT + 'flyFrom=' + from_city_code + '&to=' + to_city_code + '&dateFrom=' \
-                     + from_date + '&dateTo=' + to_date + '&partner=picky&flight_type=return&' \
-                     + 'max_stopovers=0'
-        api_response = requests.get(url=flight_url, params={})
-        if api_response.status_code is not 200:
-            return api_response.content, api_response.status_code
-        api_results = json.loads(api_response.content)
-        flights = []
-        max_returned_values = min(max_returned_values, len(api_results['data']))
-        for i in range(max_returned_values):
-            flights.append(
-                {
-                    "from_city": from_city,
-                    "from_city_code": from_city_code,
-                    "to_city": to_city,
-                    "to_city_code": to_city_code,
-                    "arrival_time": self._get_time_from_timestamp(api_results['data'][i]['aTime']),
-                    "departure_time": self._get_time_from_timestamp(api_results['data'][i]['dTime']),
-                    "price": api_results['data'][i]['price'],
-                    "duration": api_results['data'][i]['fly_duration'],
-                    "link": api_results['data'][i]['deep_link']
-                }
-            )
-        return flights
+
+        for stops in range(0, max_stop_overs):
+            flight_url = FLIGHTS_BASE_ENDPOINT + 'flyFrom=' + from_city_code + '&to=' + to_city_code + '&dateFrom=' \
+                         + from_date + '&dateTo=' + to_date + '&partner=picky&flight_type=return&' \
+                         + 'max_stopovers=' + str(stops)
+            api_response = requests.get(url=flight_url, params={})
+            if api_response.status_code is not 200:
+                return api_response.content, api_response.status_code
+            api_results = json.loads(api_response.content)
+            if len(api_results['data']) == 0:
+                continue
+
+            flights = []
+            max_returned_values = min(max_returned_values, len(api_results['data']))
+            for i in range(max_returned_values):
+                flights.append(
+                    {
+                        "from_city": from_city,
+                        "from_city_code": from_city_code,
+                        "to_city": to_city,
+                        "to_city_code": to_city_code,
+                        "arrival_time": self._get_time_from_timestamp(api_results['data'][i]['aTime']),
+                        "departure_time": self._get_time_from_timestamp(api_results['data'][i]['dTime']),
+                        "price": api_results['data'][i]['price'],
+                        "duration": api_results['data'][i]['fly_duration'],
+                        "link": api_results['data'][i]['deep_link']
+                    }
+                )
+            return flights
 
     def get_flights_for_trip(self, from_city, to_city, from_date, to_date, travelers, max_stop_overs=0):
         try:
