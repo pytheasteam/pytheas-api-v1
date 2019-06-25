@@ -20,7 +20,6 @@ from api.models.hotel import Hotel, TripHotel
 from db_manager.pytheas_db_manager_base import PytheasDBManagerBase
 from trip_builder.city_trip_builder import CityWalkTripBuilder
 from trip_builder.routes_builder.basic_route_builder import BasicRoutesBuilder
-from trip_builder.routes_builder.dfs_routes_builder import DFSRoutesBuilder
 
 
 class SQLPytheasManager(PytheasDBManagerBase):
@@ -369,7 +368,6 @@ class SQLPytheasManager(PytheasDBManagerBase):
         return parsed_attractions
 
     def get_trip_hotel(self, trip_id):
-        print(trip_id)
         trip_hotel = TripHotel.query.filter_by(trip_id=trip_id).first()
         if trip_hotel is None:
             return None
@@ -403,13 +401,17 @@ class SQLPytheasManager(PytheasDBManagerBase):
                 if hotel is None:
                     continue
                 attractions = self.get_trip_attraction(trip.id, hotel, city_name)
+                flights = self._get_flights('tel aviv', city_name, trip.start_date, trip.end_date, int(trip.people_number))
+                #if flights is not None and len(flights) is not 0:
+                #    flight_price = int(flights[0]["price"])
+
                 parsed_trip = {
                     'id': trip.id,
                     'destination': city_name,
                     'start_date': trip.start_date,
                     'end_date': trip.end_date,
                     'days': trip.days,
-                    'price': trip.price,
+                    'price': trip.price,#flight_price + (hotel.price_per_night*(trip.days-1)),
                     'currency': trip.currency,
                     'people_number': int(trip.people_number),
                     'pictures': [],
@@ -426,17 +428,18 @@ class SQLPytheasManager(PytheasDBManagerBase):
         else:
             return jsonify(all_trips), 200
 
-    def get_explore_trips(self, username, profile, from_date, to_date, city=None, travelers='2'):
+    def get_explore_trips(self, username, profile, from_date, to_date, city=None, travelers='2', budget =None):
         try:
             user_id = User.query.filter_by(username=username).first().id
             profile_id = UserProfile.query.filter_by(user_id=user_id, id=profile).first().id
-            city_id = City.query.filter_by(name=city).first()
+            city_id = City.query.filter_by(name=city).first().id
+            budget = int(budget) if budget is not None else None
             agent_response = requests.get(url=(AGENT_ENDPOINT+AGENT_ATTRACTION_GET), params={'profile_id': profile_id, 'city_id': city_id})
 
-            estimated_attractions_per_day = 8
             fromdate = datetime.strptime(from_date, '%d/%m/%Y')
             todate = datetime.strptime(to_date, '%d/%m/%Y')
             days = (todate - fromdate).days
+            estimated_requiired_attractions = days * 8
 
             if agent_response.status_code is not 200:
                 return agent_response.content, agent_response.status_code
@@ -449,23 +452,30 @@ class SQLPytheasManager(PytheasDBManagerBase):
 
                 flight_price = 0
                 flights = self._get_flights('tel aviv', city, from_date, to_date, travelers)
-                if flights is not None and len(flights) is not 0:
+                if flights is not None and len(flights) > 0:
                     flight_price = int(flights[0]["price"])
+                else:
+                    return trips
 
                 hotels = self._get_hotels(city, from_date, to_date, travelers)
-                trip_builder = CityWalkTripBuilder(DFSRoutesBuilder())
+                if hotels is None or len(hotels) == 0:
+                    return trips
 
                 if '5' in result['attractions']:
                     attractions = result['attractions']['5']
-                if '4'in result['attractions'] and len(attractions) <= (days*estimated_attractions_per_day):
+                if '4'in result['attractions'] and len(attractions) <= estimated_requiired_attractions:
                     attractions.extend(result['attractions']['4'])
-                if '3'in result['attractions'] and len(attractions) <= (days*estimated_attractions_per_day):
+                if '3'in result['attractions'] and len(attractions) <= estimated_requiired_attractions:
                     attractions.extend(result['attractions']['3'])
+                if len(attractions) < estimated_requiired_attractions:
+                    return trips
 
+                trip_builder = CityWalkTripBuilder(BasicRoutesBuilder())
                 attractions = [Attraction.query.get(attraction_id) for attraction_id in attractions]
-
                 for hotel in hotels:
                     price = int(flight_price) + (int(hotel["price_per_night"])*days) #need to convert currencies
+                    if budget is not None and price > budget:
+                        continue
                     trips.append({
                         'id': -1,
                         'destination': city,
@@ -513,7 +523,6 @@ class SQLPytheasManager(PytheasDBManagerBase):
             return jsonify(tags), 200
         except Exception as e:
             return str(e), 500
-
 
     def _get_flights(self, from_city, to_city, from_date, to_date, travelers, max_stop_overs=0):
         max_returned_values = 3

@@ -119,7 +119,7 @@ def explore():
     from_date = request.args.get('from')
     to_date = request.args.get('to')
     travelers = request.args.get('travelers', 1)
-
+    budget = request.args.get('price', None)
     try:
         token = request.headers.get('Authorization')
         username = jwt.decode(token, SERVER_SECRET_KEY, algorithms=['HS256'])['username']
@@ -132,7 +132,8 @@ def explore():
         profile=profile,
         from_date=from_date,
         to_date=to_date,
-        travelers=travelers
+        travelers=travelers,
+        budget=budget
     )
     return make_response(response)
 
