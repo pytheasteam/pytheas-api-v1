@@ -129,3 +129,4 @@ dmypy.json
 .idea/
 api_venv/
 pytheas_venv/
+trip_builder/config/google.py
