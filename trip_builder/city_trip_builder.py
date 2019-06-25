@@ -1,8 +1,14 @@
+import datetime
 import json
+import math
+
 import requests
 from trip_builder.routes_builder.route_builder_strategy_base import RoutesBuilderStrategyBase
 from trip_builder.trip_builder_strategy_base import TripBuilderStrategyBase
 from trip_builder.config import bing_api
+import googlemaps
+from trip_builder.config.google import KEY
+from math import sin, cos, sqrt, atan2, radians
 
 MAX_HOURS_PER_DAY = 8  # Hours
 KM_AVERAGE_WALKING_TIME = 0.25  # Hours
@@ -55,6 +61,38 @@ class CityWalkTripBuilder(TripBuilderStrategyBase):
 
     @staticmethod
     def _get_distances_between_attractions(attraction_list, route_type):
+        distances = {}
+        attraction_coord = {}  # { id: { lat: lng: } }
+        google = googlemaps.Client(key=KEY)
+        print(datetime.datetime.now())
+        for attraction in attraction_list:
+            res = google.geocode(attraction.address)
+            attraction_coord[attraction.id] = res[0]['geometry']['location']
+        for attraction in attraction_coord:
+            distances[attraction] = {}
+            for other_attraction in attraction_coord:
+                if attraction != other_attraction:
+
+                    R = 6373.0
+
+                    lat1 = radians(attraction_coord[attraction]["lat"])
+                    lon1 = radians(attraction_coord[attraction]["lng"])
+                    lat2 = radians(attraction_coord[other_attraction]["lat"])
+                    lon2 = radians(attraction_coord[other_attraction]["lng"])
+
+                    dlon = lon2 - lon1
+                    dlat = lat2 - lat1
+
+                    a = sin(dlat / 2) ** 2 + cos(lat1) * cos(lat2) * sin(dlon / 2) ** 2
+                    c = 2 * atan2(sqrt(a), sqrt(1 - a))
+
+                    distance = R * c
+                    distances[attraction][other_attraction] = distance
+        print(datetime.datetime.now())
+
+
+    @staticmethod
+    def _get_distances_between_attractions_old(attraction_list, route_type):
         #  type: (list, bing_api.RouteType) -> dict
         """
 
@@ -67,8 +105,12 @@ class CityWalkTripBuilder(TripBuilderStrategyBase):
         number_of_locations = 2  # Get location between 2 attractions each time
         distances = {}
         temp_attraction_list = list(attraction_list)
+        match_counter = 0
         while temp_attraction_list:
+            print(match_counter)
+            match_counter = 0
             attraction = temp_attraction_list.pop()
+            print(f"{len(temp_attraction_list)} left")
             if attraction.id not in distances:
                 distances[attraction.id] = {}
             for other_attraction in temp_attraction_list:
@@ -80,14 +122,18 @@ class CityWalkTripBuilder(TripBuilderStrategyBase):
                 }
                 if other_attraction.id not in distances:
                     distances[other_attraction.id] = {}
-                r = requests.get(url=f'{bing_api.API_ENDPOINT}/Walking', params=params)
-                data = json.loads(r.content)
                 try:
-                    distance = data['resourceSets'][0]['resources'][0]['travelDistance']
-                except Exception as e:
-                    pass
-                else:
-                    distances[attraction.id][other_attraction.id] = distance
-                    distances[other_attraction.id][attraction.id] = distance
+                    distances[attraction.id][other_attraction.id]
+                except:
+                    r = requests.get(url=f'{bing_api.API_ENDPOINT}/Walking', params=params)
+                    data = json.loads(r.content)
+                    try:
+                        distance = data['resourceSets'][0]['resources'][0]['travelDistance']
+                    except Exception as e:
+                        pass
+                    else:
+                        distances[attraction.id][other_attraction.id] = distance
+                        distances[other_attraction.id][attraction.id] = distance
+                        match_counter += 1
         return distances
 
