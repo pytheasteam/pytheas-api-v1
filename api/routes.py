@@ -165,19 +165,44 @@ def explore_hotels():
 @app.route('/api/trip', methods=['GET', 'POST', 'PUT'])
 def trip():
     response = 500
-    if request.method == 'POST':
+    if request.method != 'GET':
+        try:
+            token = request.headers.get('Authorization')
+            username = jwt.decode(token, SERVER_SECRET_KEY, algorithms=['HS256'])['username']
+        except:
+            return make_response('Unauthorized', 401)
+
         body = json.loads(request.data)
-        response = db_manager.create_trip(
-            username=body.get('username'),
-            start_date=body.get('start_date'),
-            end_date=body.get('end_date'),
-            price=body.get('price'),
-            flight=body.get('flight'),
-            hotel=body.get('hotel'),
-            explore_trip=body.get('trip')  # Same as the explore trip that sent in /api/explore
-        )
-    elif request.method == 'PUT':
-        pass
+        trip_data = {
+            'id': int(body.get('id', -1)),
+            'destination': body.get('destination'),
+            'start_date': body.get('start_date'),
+            'end_date': body.get('end_date'),
+            'days': int(body.get('days')),
+            'price':int(body.get('price')),
+            'currency': body.get('currency'),
+            'people_number': int(body.get('people_number')),
+            'pictures': [],
+            'hotel': body.get('hotel'),
+            'places': body.get('places')
+        }
+
+        if request.method == 'POST':
+            response = db_manager.create_trip(
+                username=username,
+                profile_id=body.get('profile'),
+                flight_rsrv=body.get('flight_rsrv', None),
+                hotel_rsrv=body.get('hotel_rsrv', None),
+                trip_data=trip_data
+            )
+        elif request.method == 'PUT':
+            response = db_manager.upsert_trip(
+                username=username,
+                profile_id=body.get('profile'),
+                flight_rsrv=body.get('flight_rsrv', None),
+                hotel_rsrv=body.get('hotel_rsrv', None),
+                trip_data=trip_data
+            )
     else:
         try:
             token = request.headers.get('Authorization')
@@ -187,4 +212,26 @@ def trip():
         else:
             response = db_manager.get_trips(username)
 
+    return make_response(response)
+
+
+@app.route('/api/profile_attraction', methods=['POST'])
+def profile_attraction():
+    body = json.loads(request.data)
+    profile = body.get('profile')
+    attraction = body.get('attraction')
+    rate = body.get('rate')
+
+    try:
+        token = request.headers.get('Authorization')
+        username = jwt.decode(token, SERVER_SECRET_KEY, algorithms=['HS256'])['username']
+    except:
+        return make_response('Unauthorized', 401)
+
+    response = db_manager.set_profile_attraction_rate(
+        username=username,
+        profile_id=profile,
+        attraction_id=attraction,
+        rate=rate
+    )
     return make_response(response)
