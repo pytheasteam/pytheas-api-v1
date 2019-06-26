@@ -121,9 +121,8 @@ def explore():
     travelers = request.args.get('travelers', 1)
     budget = request.args.get('price', None)
     try:
-        #token = request.headers.get('Authorization')
-        #username = jwt.decode(token, SERVER_SECRET_KEY, algorithms=['HS256'])['username']
-        username = 'user.test@example.com'
+        token = request.headers.get('Authorization')
+        username = jwt.decode(token, SERVER_SECRET_KEY, algorithms=['HS256'])['username']
     except:
         return make_response('Unauthorized', 401)
 
@@ -169,9 +168,8 @@ def trip():
     response = 500
     if request.method != 'GET':
         try:
-            #token = request.headers.get('Authorization')
-            #username = jwt.decode(token, SERVER_SECRET_KEY, algorithms=['HS256'])['username']
-            username = 'user.test@example.com'
+            token = request.headers.get('Authorization')
+            username = jwt.decode(token, SERVER_SECRET_KEY, algorithms=['HS256'])['username']
         except:
             return make_response('Unauthorized', 401)
 
@@ -195,7 +193,7 @@ def trip():
                 username=username,
                 profile_id=body.get('profile'),
                 flight_rsrv=body.get('flight_rsrv', None),
-                hotel_rsrv=body.get('hotel_rsrv', None),
+                hotel_rsrv_code=body.get('hotel_rsrv_code', None),
                 trip_data=trip_data
             )
         elif request.method == 'PUT':
@@ -203,7 +201,7 @@ def trip():
                 username=username,
                 profile_id=body.get('profile'),
                 flight_rsrv=body.get('flight_rsrv', None),
-                hotel_rsrv=body.get('hotel_rsrv', None),
+                hotel_rsrv_code=body.get('hotel_rsrv_code', None),
                 trip_data=trip_data
             )
     else:

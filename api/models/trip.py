@@ -81,12 +81,7 @@ class Trip(db.Model):
         nullable=False
     )
 
-    flight_rsrv = db.Column(
-        db.String(100),
-        nullable=True
-    )
-
-    hotel_rsrv = db.Column(
+    hotel_rsrv_code = db.Column(
         db.String(100),
         nullable=True
     )
