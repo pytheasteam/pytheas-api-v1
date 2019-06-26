@@ -10,7 +10,6 @@ from . import db
 db_manager = SQLPytheasManager(db)
 
 CORS(app, supports_credentials=True, resources={r'/*': {"origins": '*', "headers": "*"}})
-app.config['CORS_HEADERS'] = 'Content-Type'
 
 
 @app.route('/')
