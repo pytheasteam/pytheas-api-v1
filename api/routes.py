@@ -9,15 +9,18 @@ from . import db
 
 db_manager = SQLPytheasManager(db)
 
-CORS(app, supports_credentials=True, resources={r'/*': {"origins": '*', "headers": "*"}})
+CORS(app)
+app.config['CORS_HEADERS'] = 'Content-Type'
 
 
 @app.route('/')
+@cross_origin()
 def index():
     return 'Server is running'
 
 
 @app.route('/login', methods=['POST'])
+@cross_origin()
 def entry():
     try:
         body = json.loads(request.data)
@@ -33,6 +36,7 @@ def entry():
 
 
 @app.route('/api')
+@cross_origin()
 def api_index():
     #  TODO: Replace with swagger
     db_manager.initialize()
@@ -40,6 +44,7 @@ def api_index():
 
 
 @app.route('/api/tags', methods=['GET', 'POST'])
+@cross_origin()
 def tags():
     if request.method == 'POST':
         body = json.loads(request.data)
@@ -52,12 +57,14 @@ def tags():
 
 
 @app.route('/api/cities', methods=['GET'])
+@cross_origin()
 def cities():
     response = db_manager.get_cities()
     return make_response(response)
 
 
 @app.route('/api/attractions', methods=['GET', 'POST'])
+@cross_origin()
 def attractions():
     if request.method == 'POST':
         body = json.loads(request.data)
@@ -78,6 +85,7 @@ def attractions():
 
 @app.route('/api/profile', methods=['POST', 'GET'])
 @app.route('/api/profile/<profile_id>', methods=['DELETE'])
+@cross_origin()
 def profiles(profile_id=None):
     response = ''
     if request.method != 'GET':
@@ -112,6 +120,7 @@ def profiles(profile_id=None):
 
 
 @app.route('/api/explore', methods=['GET'])
+@cross_origin()
 def explore():
     city = request.args.get('city')
     profile = request.args.get('profile')
@@ -138,6 +147,7 @@ def explore():
 
 
 @app.route('/api/explore_flight', methods=['GET'])
+@cross_origin()
 def explore_flight():
     from_city = request.args.get('from_city', 'tel aviv')
     to_city = request.args.get('to_city')
@@ -151,6 +161,7 @@ def explore_flight():
 
 
 @app.route('/api/explore_hotels', methods=['GET'])
+@cross_origin()
 def explore_hotels():
     city_name = request.args.get('city')
     from_date = request.args.get('from_date')
@@ -163,6 +174,7 @@ def explore_hotels():
 
 
 @app.route('/api/trip', methods=['GET', 'POST', 'PUT'])
+@cross_origin()
 def trip():
     response = 500
     if request.method != 'GET':
@@ -216,6 +228,7 @@ def trip():
 
 
 @app.route('/api/profile_attraction', methods=['POST'])
+@cross_origin()
 def profile_attraction():
     body = json.loads(request.data)
     profile = body.get('profile')
