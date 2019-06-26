@@ -7,7 +7,7 @@ app = create_app()
 CORS(app, resources={r"/*": {"origins": "*"}})
 app.config['CORS_HEADERS'] = 'Content-Type'
 
-PORT = os.environ.get('PORT', 5000)
+PORT = os.environ.get('PORT', 5005)
 HOST = os.environ.get('HOST', '127.0.0.1')
 # HOST = '0.0.0.0'
 

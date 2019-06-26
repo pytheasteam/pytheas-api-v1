@@ -121,8 +121,9 @@ def explore():
     travelers = request.args.get('travelers', 1)
     budget = request.args.get('price', None)
     try:
-        token = request.headers.get('Authorization')
-        username = jwt.decode(token, SERVER_SECRET_KEY, algorithms=['HS256'])['username']
+        #token = request.headers.get('Authorization')
+        #username = jwt.decode(token, SERVER_SECRET_KEY, algorithms=['HS256'])['username']
+        username = 'user.test@example.com'
     except:
         return make_response('Unauthorized', 401)
 
@@ -168,8 +169,9 @@ def trip():
     response = 500
     if request.method != 'GET':
         try:
-            token = request.headers.get('Authorization')
-            username = jwt.decode(token, SERVER_SECRET_KEY, algorithms=['HS256'])['username']
+            #token = request.headers.get('Authorization')
+            #username = jwt.decode(token, SERVER_SECRET_KEY, algorithms=['HS256'])['username']
+            username = 'user.test@example.com'
         except:
             return make_response('Unauthorized', 401)
 
