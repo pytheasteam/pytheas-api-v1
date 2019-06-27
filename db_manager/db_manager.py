@@ -492,7 +492,7 @@ class SQLPytheasManager(PytheasDBManagerBase):
                     'start_date': trip.start_date,
                     'end_date': trip.end_date,
                     'days': trip.days,
-                    'price': flight,
+                    'price': trip.price,
                     'currency': trip.currency,
                     'people_number': int(trip.people_number),
                     'pictures': [],
