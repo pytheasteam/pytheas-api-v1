@@ -6,7 +6,7 @@ from flask import jsonify
 import jwt
 
 from db_manager.config.agent_url import AGENT_ENDPOINT, AGENT_ATTRACTION_GET, AGENT_TAGS_GET
-from db_manager.config.secrets import SERVER_SECRET_KEY, PROFILE_REMOVE_SP, PROFILE_RATE_SET_SP, TRIP_UPDATE_RSRV_SP, UPSERT_TRIP_FLIGHT_SP
+from db_manager.config.secrets import SERVER_SECRET_KEY, PROFILE_REMOVE_SP, PROFILE_RATE_SET_SP, TRIP_UPDATE_RSRV_SP, UPSERT_TRIP_FLIGHT_SP,DEFAULT_STARS
 from db_manager.config.exteranl_apis import FLIGHTS_BASE_ENDPOINT, HOTELS_BASE_ENDPOINT, HOTELS_HEADER
 from db_manager.location_code_matcher import LocationMatcher
 from api.models.attraction import Attraction
@@ -214,7 +214,7 @@ class SQLPytheasManager(PytheasDBManagerBase):
         hotel_url = hotel_data['url']
         hotel = Hotel.query.filter_by(name=hotel_name, url=hotel_url).first()
         if hotel is None:
-            stars = hotel_data['stars'] if hotel_data['stars'] != 0 else None
+            stars = hotel_data['stars'] if hotel_data['stars'] != DEFAULT_STARS else None
             new_hotel = Hotel(
                 name=hotel_name,
                 address=hotel_data['address'],
@@ -397,7 +397,7 @@ class SQLPytheasManager(PytheasDBManagerBase):
         hotel_data = Hotel.query.filter_by(id=trip_hotel.hotel_id).first()
         if hotel_data is None:
             return None
-        stars = str(hotel_data.stars) if hotel_data.stars is not None else 'Not Specified'
+        stars = str(hotel_data.stars) if hotel_data.stars is not None else DEFAULT_STARS
         hotel = {
             "address": hotel_data.address,
             "currency": trip_hotel.currency,
@@ -701,7 +701,7 @@ class SQLPytheasManager(PytheasDBManagerBase):
             address = str(row_data['address_trans']) + ',' + str(row_data['district']) + ',' + \
                       str(row_data['city_trans']) + ',' + str(row_data['zip']) + ',' + \
                       str(row_data['country_trans'])
-            stars = str(row_data['class']) if row_data['class'] !=0 else 'Not Specified'
+            stars = str(row_data['class']) if row_data['class'] != 0 else DEFAULT_STARS
 
             hotels.append(
                 {
