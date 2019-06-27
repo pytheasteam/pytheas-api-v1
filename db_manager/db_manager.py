@@ -146,7 +146,7 @@ class SQLPytheasManager(PytheasDBManagerBase):
         if trip is None:
             return self.create_trip(username, profile_id, flight_rsrv, hotel_rsrv_code, trip_data)
         else:
-            return self.update_trip(username, profile_id, trip_id, flight_rsrv, hotel_rsrv_code)
+            return self.update_trip(username, trip_id, flight_rsrv, hotel_rsrv_code)
 
     def create_trip(self, username, profile_id, flight_rsrv, hotel_rsrv_code, trip_data):
         try:
@@ -242,14 +242,11 @@ class SQLPytheasManager(PytheasDBManagerBase):
         self.db.session.add(new_trip_hotel)
         self.db.session.commit()
 
-    def update_trip(self, username, profile_id, trip_id, flight_rsrv_info, hotel_rsrv_code):
+    def update_trip(self, username, trip_id, flight_rsrv_info, hotel_rsrv_code):
         try:
             user_id = User.query.filter_by(username=username).first().id
-            profile_id = UserProfile.query.filter_by(user_id=user_id, id=profile_id).first().id
-            if profile_id is None:
-                raise Exception("No Profile found")
 
-            trip = Trip.query.filter_by(id=trip_id, profile_id=profile_id).first()
+            trip = Trip.query.filter_by(id=trip_id, user_id=user_id).first()
             if trip is None:
                 raise Exception("No trip found")
 
@@ -272,7 +269,7 @@ class SQLPytheasManager(PytheasDBManagerBase):
         except Exception as e:
             print(e)
             self.db.session.rollback()
-            return "Error creating new profile", 500
+            return "Error updating trip", 500
 
     def _get_string_param(self, param):
         return "'" + str(param) + "'"
