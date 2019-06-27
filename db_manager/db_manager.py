@@ -251,24 +251,23 @@ class SQLPytheasManager(PytheasDBManagerBase):
             trip = Trip.query.filter_by(id=trip_id, profile_id=profile_id).first()
             if trip is None:
                 raise Exception("No trip found")
-            trip_flight = TripFlight.query.filter_by(trip_id=trip_id).first()
 
+            trip_flight = TripFlight.query.filter_by(trip_id=trip_id).first()
             trip.hotel_rsrv_code = hotel_rsrv_code if hotel_rsrv_code is not None and hotel_rsrv_code != '' else trip.hotel_rsrv
             if trip.hotel_rsrv_code is not None and trip.hotel_rsrv_code != '':
                 trip.hotel_rsrv_code = "'" + trip.hotel_rsrv_code + "'"
-
             if flight_rsrv_info is not None and flight_rsrv_info != {}:
                 trip_flight = flight_rsrv_info
 
             is_booked = False if trip_flight is None or trip_flight == {} or trip.hotel_rsrv_code is None else True
 
             self._upsert_trip_flight(trip_id, flight_rsrv_info)
-
             params = [trip_id, trip.hotel_rsrv_code, is_booked]
             self._exec_procedure(TRIP_UPDATE_RSRV_SP, params)
             self.db.session.commit()
 
-            return self._get_trip(trip_id), 200
+            return_trip = self._get_trip(trip_id)
+            return return_trip, 200
         except Exception as e:
             print(e)
             self.db.session.rollback()
@@ -484,13 +483,16 @@ class SQLPytheasManager(PytheasDBManagerBase):
                     continue
                 attractions = self.get_trip_attraction(trip.id, hotel, city_name)
 
+                if flight is not None and flight != {} and hotel is not None:
+                    trip.price = int(flight['price']) + (int(hotel['price_per_night']) * (trip.days - 1))
+
                 parsed_trip = {
                     'id': trip.id,
                     'destination': city_name,
                     'start_date': trip.start_date,
                     'end_date': trip.end_date,
                     'days': trip.days,
-                    'price': trip.price,#flight_price + (hotel.price_per_night*(trip.days-1)),
+                    'price': flight,
                     'currency': trip.currency,
                     'people_number': int(trip.people_number),
                     'pictures': [],
