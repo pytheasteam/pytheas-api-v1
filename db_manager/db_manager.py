@@ -375,7 +375,7 @@ class SQLPytheasManager(PytheasDBManagerBase):
                 'name': attraction.name,
                 'rate': attraction.rate,
                 'address': attraction.address,
-                'price': attraction.price,
+                'price': int(attraction.price),
                 'description': attraction.description,
                 'phone number': attraction.phone_number,
                 'website': attraction.website,
@@ -437,12 +437,18 @@ class SQLPytheasManager(PytheasDBManagerBase):
         try:
             trip = Trip.query.filter_by(id=trip_id).first()
             city_name = City.query.get(trip.city_id).name
+            new_flights = []
 
             hotel = self.get_trip_hotel(trip.id)
             flight = self._get_trip_flight(trip.id)
+            if flight is None or flight == {}:
+                date_start = trip.start_date.strftime("%d/%m/%Y")
+                date_end = trip.end_date.strftime("%d/%m/%Y")
+                new_flights = self._get_flights('tel aviv', city_name, date_start, date_end, trip.people_number)
+
             attractions = self.get_trip_attraction(trip.id, hotel, city_name)
             if flight is not None and flight != {} and hotel is not None:
-                trip.price = int(flight['price']) + (int(hotel['price_per_night'])*(trip.days-1))
+                trip.price = int(int(flight['price']) + (int(hotel['price_per_night'])*(trip.days-1)))
 
             parsed_trip = {
                 'id': trip.id,
@@ -455,7 +461,7 @@ class SQLPytheasManager(PytheasDBManagerBase):
                 'currency': trip.currency,
                 'people_number': int(trip.people_number),
                 'pictures': [],
-                'flights': [],
+                'flights': new_flights,
                 'hotel': hotel,
                 'explore': False,
                 'places': attractions,
@@ -474,9 +480,15 @@ class SQLPytheasManager(PytheasDBManagerBase):
             user_id = User.query.filter_by(username=username).first().id
             trips = Trip.query.filter_by(user_id=user_id)
             all_trips = []
+            new_flights = []
             for trip in trips:
                 city_name = City.query.get(trip.city_id).name
                 flight = self._get_trip_flight(trip.id)
+                if flight is None or flight == {}:
+                    date_start = trip.start_date.strftime("%d/%m/%Y")
+                    date_end = trip.end_date.strftime("%d/%m/%Y")
+                    new_flights = self._get_flights('tel aviv', city_name, date_start, date_end, trip.people_number)
+
                 hotel = self.get_trip_hotel(trip.id)
                 if hotel is None:
                     continue
@@ -496,7 +508,7 @@ class SQLPytheasManager(PytheasDBManagerBase):
                     'currency': trip.currency,
                     'people_number': int(trip.people_number),
                     'pictures': [],
-                    'flights': [],
+                    'flights': new_flights,
                     'hotel': hotel,
                     'explore': False,
                     'places': attractions,
@@ -506,6 +518,7 @@ class SQLPytheasManager(PytheasDBManagerBase):
                 }
                 all_trips.append(parsed_trip)
         except Exception as e:
+            print(e)
             return str(e), 500
         else:
             return jsonify(all_trips), 200
@@ -561,7 +574,7 @@ class SQLPytheasManager(PytheasDBManagerBase):
                 trip_builder = CityWalkTripBuilder(DFSRoutesBuilder())
                 attractions = [Attraction.query.get(attraction_id) for attraction_id in attractions]
                 for hotel in hotels:
-                    price = int(flight_price) + (int(hotel["price_per_night"])*days) #need to convert currencies
+                    price = int(int(flight_price) + (int(hotel["price_per_night"])*days)) #need to convert currencies
                     if budget is not None and price > budget:
                         continue
 
@@ -622,8 +635,9 @@ class SQLPytheasManager(PytheasDBManagerBase):
 
         for stops in range(0, max_stop_overs):
             flight_url = FLIGHTS_BASE_ENDPOINT + 'flyFrom=' + from_city_code + '&to=' + to_city_code + '&dateFrom=' \
-                         + from_date + '&dateTo=' + to_date + '&partner=picky&flight_type=return&' \
+                         + str(from_date) + '&dateTo=' + str(to_date) + '&partner=picky&flight_type=return&' \
                          + 'max_stopovers=' + str(stops)
+      
             api_response = requests.get(url=flight_url, params={})
             if api_response.status_code is not 200:
                 return api_response.content, api_response.status_code
