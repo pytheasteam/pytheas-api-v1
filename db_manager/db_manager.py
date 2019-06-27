@@ -536,7 +536,7 @@ class SQLPytheasManager(PytheasDBManagerBase):
             fromdate = datetime.strptime(from_date, '%d/%m/%Y')
             todate = datetime.strptime(to_date, '%d/%m/%Y')
             days = (todate - fromdate).days
-            estimated_requiired_attractions = days * 8
+            estimated_requiired_attractions = days * 6
 
             if agent_response.status_code is not 200:
                 return agent_response.content, agent_response.status_code
@@ -568,7 +568,7 @@ class SQLPytheasManager(PytheasDBManagerBase):
                     attractions.extend(result['attractions']['2'])
                 if '1'in result['attractions'] and len(attractions) <= estimated_requiired_attractions:
                     attractions.extend(result['attractions']['1'])
-                if len(attractions) < estimated_requiired_attractions*0.8:
+                if len(attractions) < estimated_requiired_attractions:
                     continue
 
                 trip_builder = CityWalkTripBuilder(DFSRoutesBuilder())
@@ -637,7 +637,7 @@ class SQLPytheasManager(PytheasDBManagerBase):
             flight_url = FLIGHTS_BASE_ENDPOINT + 'flyFrom=' + from_city_code + '&to=' + to_city_code + '&dateFrom=' \
                          + str(from_date) + '&dateTo=' + str(to_date) + '&partner=picky&flight_type=return&' \
                          + 'max_stopovers=' + str(stops)
-      
+
             api_response = requests.get(url=flight_url, params={})
             if api_response.status_code is not 200:
                 return api_response.content, api_response.status_code
