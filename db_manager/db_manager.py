@@ -281,7 +281,7 @@ class SQLPytheasManager(PytheasDBManagerBase):
             from_city = City.query.filter_by(name=flight['from_city']).first().id
             to_city = City.query.filter_by(name=flight['to_city']).first().id
             duration = self._get_string_param(flight['duration'])
-            price = flight['price']
+            price = int(flight['price'])
             reservation_number = self._get_string_param(flight['reservation_number'])
 
             params = [trip_id, arrival_time, departure_time, from_city, to_city, duration, price, reservation_number]
@@ -360,7 +360,7 @@ class SQLPytheasManager(PytheasDBManagerBase):
             'name': hotel['name'],
             'rate': 5,
             'address': hotel['address'],
-            'price': hotel['price_per_night'],
+            'price': int(hotel['price_per_night']),
             'description': '',
             'phone number': '',
             'website': hotel['url'],
@@ -523,13 +523,15 @@ class SQLPytheasManager(PytheasDBManagerBase):
         else:
             return jsonify(all_trips), 200
 
-    def get_explore_trips(self, username, profile, from_date, to_date, city=None, travelers='2', budget =None):
+    def get_explore_trips(self, username, profile, from_date, to_date, city=None, travelers='2', budget=None):
         try:
             user_id = User.query.filter_by(username=username).first().id
             profile_id = UserProfile.query.filter_by(user_id=user_id, id=profile).first().id
+
             city_id = None
             if city:
                 city_id = City.query.filter_by(name=city).first().id
+            budget = None if budget == "" else budget
             if budget:
                 budget = int(budget)
             agent_response = requests.get(url=(AGENT_ENDPOINT+AGENT_ATTRACTION_GET), params={'profile_id': profile_id, 'city_id': city_id})
@@ -656,7 +658,7 @@ class SQLPytheasManager(PytheasDBManagerBase):
                         "to_city_code": to_city_code,
                         "arrival_time": self._get_time_from_timestamp(api_results['data'][i]['aTime']),
                         "departure_time": self._get_time_from_timestamp(api_results['data'][i]['dTime']),
-                        "price": api_results['data'][i]['price'],
+                        "price": int(api_results['data'][i]['price']),
                         "duration": api_results['data'][i]['fly_duration'],
                         "link": api_results['data'][i]['deep_link']
                     }
@@ -707,7 +709,7 @@ class SQLPytheasManager(PytheasDBManagerBase):
                     "facilities": [],
                     "main_photo_url": row_data['main_photo_url'].replace('square60', 'square350'),
                     "name": row_data['hotel_name'],
-                    "price_per_night": (float(row_data['price_breakdown']['gross_price']) / days),
+                    "price_per_night": int((float(row_data['price_breakdown']['gross_price']) / days)),
                     "room_type": "",
                     "start_date": from_date.date(),
                     "url": row_data['url'],
