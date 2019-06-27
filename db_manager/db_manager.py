@@ -448,6 +448,7 @@ class SQLPytheasManager(PytheasDBManagerBase):
 
             parsed_trip = {
                 'id': trip.id,
+                'profile': trip.profile_id,
                 'destination': city_name,
                 'start_date': trip.start_date,
                 'end_date': trip.end_date,
@@ -488,6 +489,7 @@ class SQLPytheasManager(PytheasDBManagerBase):
 
                 parsed_trip = {
                     'id': trip.id,
+                    'profile': trip.profile_id,
                     'destination': city_name,
                     'start_date': trip.start_date,
                     'end_date': trip.end_date,
@@ -567,6 +569,7 @@ class SQLPytheasManager(PytheasDBManagerBase):
 
                     trips.append({
                         'id': -1,
+                        'profile': profile_id,
                         'destination': city,
                         'start_date': from_date,
                         'end_date': to_date,
