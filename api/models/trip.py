@@ -75,7 +75,7 @@ class Trip(db.Model):
     )
 
     people_number = db.Column(
-        db.Boolean,
+        db.Integer,
         index=False,
         unique=False,
         nullable=False

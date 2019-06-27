@@ -182,7 +182,6 @@ class SQLPytheasManager(PytheasDBManagerBase):
 
             attractions = self._add_trip_attractions(trip_data, new_trip)
             self._create_hotel(new_trip.id, trip_data['hotel'])
-
             return_trip = self._get_trip(new_trip.id)
             return return_trip, 200
         except Exception as e:
@@ -195,6 +194,8 @@ class SQLPytheasManager(PytheasDBManagerBase):
             for day in range(0, len(trip_full_data['places'])):
                 for i in range(1, len(trip_full_data['places'][day])):
                     attraction = trip_full_data['places'][day][i]
+                    if attraction is None or attraction=={}:
+                        continue
                     new_trip_attraction = TripAttraction(
                         trip_id=trip.id,
                         attraction_id=attraction['id'],
