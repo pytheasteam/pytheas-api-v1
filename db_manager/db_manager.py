@@ -214,11 +214,12 @@ class SQLPytheasManager(PytheasDBManagerBase):
         hotel_url = hotel_data['url']
         hotel = Hotel.query.filter_by(name=hotel_name, url=hotel_url).first()
         if hotel is None:
+            stars = hotel_data['stars'] if hotel_data['stars'] != 0 else None
             new_hotel = Hotel(
                 name=hotel_name,
                 address=hotel_data['address'],
                 main_photo_url=hotel_data['main_photo_url'],
-                stars=hotel_data['stars'],
+                stars=stars,
                 url=hotel_url,
                 description=hotel_data['description'],
                 facilities=""
@@ -396,6 +397,7 @@ class SQLPytheasManager(PytheasDBManagerBase):
         hotel_data = Hotel.query.filter_by(id=trip_hotel.hotel_id).first()
         if hotel_data is None:
             return None
+        stars = str(hotel_data.stars) if hotel_data.stars is not None else 'Not Specified'
         hotel = {
             "address": hotel_data.address,
             "currency": trip_hotel.currency,
@@ -408,7 +410,7 @@ class SQLPytheasManager(PytheasDBManagerBase):
             "start_date": trip_hotel.start_date,
             "url": hotel_data.url,
             "description": hotel_data.description,
-            "stars": hotel_data.stars
+            "stars": stars
         }
         return hotel
 
@@ -699,7 +701,7 @@ class SQLPytheasManager(PytheasDBManagerBase):
             address = str(row_data['address_trans']) + ',' + str(row_data['district']) + ',' + \
                       str(row_data['city_trans']) + ',' + str(row_data['zip']) + ',' + \
                       str(row_data['country_trans'])
-            stars = str(row_data['class']) if row_data['class']!=0 else 'Not Specified'
+            stars = str(row_data['class']) if row_data['class'] !=0 else 'Not Specified'
 
             hotels.append(
                 {
