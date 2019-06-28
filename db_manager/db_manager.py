@@ -6,7 +6,8 @@ from flask import jsonify
 import jwt
 
 from db_manager.config.agent_url import AGENT_ENDPOINT, AGENT_ATTRACTION_GET, AGENT_TAGS_GET
-from db_manager.config.secrets import SERVER_SECRET_KEY, PROFILE_REMOVE_SP, PROFILE_RATE_SET_SP, TRIP_UPDATE_RSRV_SP, UPSERT_TRIP_FLIGHT_SP
+from db_manager.config.secrets import SERVER_SECRET_KEY, PROFILE_REMOVE_SP, PROFILE_RATE_SET_SP, \
+                                      TRIP_UPDATE_RSRV_SP, UPSERT_TRIP_FLIGHT_SP, DEFAULT_STARS, DELETE_TRIP_SP
 from db_manager.config.exteranl_apis import FLIGHTS_BASE_ENDPOINT, HOTELS_BASE_ENDPOINT, HOTELS_HEADER
 from db_manager.location_code_matcher import LocationMatcher
 from api.models.attraction import Attraction
@@ -153,7 +154,7 @@ class SQLPytheasManager(PytheasDBManagerBase):
             user_id = User.query.filter_by(username=username).first().id
             profile_id = UserProfile.query.filter_by(user_id=user_id, id=profile_id).first().id
             if profile_id is None:
-                raise
+                raise Exception("No profile found")
 
             city_id = City.query.filter_by(name=trip_data['destination']).first().id
             if flight_rsrv is None or flight_rsrv == {} or hotel_rsrv_code is None:
@@ -206,7 +207,7 @@ class SQLPytheasManager(PytheasDBManagerBase):
         except Exception as e:
             print(e)
             self.db.session.rollback()
-            raise
+            raise e
 
     def _create_hotel(self, trip_id, hotel_data):
         hotel_id = 0
@@ -214,7 +215,7 @@ class SQLPytheasManager(PytheasDBManagerBase):
         hotel_url = hotel_data['url']
         hotel = Hotel.query.filter_by(name=hotel_name, url=hotel_url).first()
         if hotel is None:
-            stars = hotel_data['stars'] if hotel_data['stars'] != 0 else None
+            stars = hotel_data['stars'] if hotel_data['stars'] != DEFAULT_STARS else None
             new_hotel = Hotel(
                 name=hotel_name,
                 address=hotel_data['address'],
@@ -272,9 +273,6 @@ class SQLPytheasManager(PytheasDBManagerBase):
             self.db.session.rollback()
             return "Error updating trip", 500
 
-    def _get_string_param(self, param):
-        return "'" + str(param) + "'"
-
     def _upsert_trip_flight(self, trip_id, flight):
         if flight is not None and flight != {}:
             arrival_time = self._get_string_param(flight['arrival_time'])
@@ -304,6 +302,25 @@ class SQLPytheasManager(PytheasDBManagerBase):
             self.db.session.rollback()
             return "Error adding profile rate", 500
         return "success", 200
+
+    #  DELETE FUNCTIONS
+
+    def delete_trip(self, username, trip_id):
+        try:
+            user_id = User.query.filter_by(username=username).first().id
+            if user_id is None:
+                raise Exception("No user found")
+
+            params = [trip_id]
+            self._exec_procedure(DELETE_TRIP_SP, params)
+            self.db.session.commit()
+        except Exception as e:
+            print(e)
+            self.db.session.rollback()
+            return "Error deleting trip", 500
+        return "success", 200
+
+
 
     #  GET FUNCTIONS
 
@@ -397,7 +414,7 @@ class SQLPytheasManager(PytheasDBManagerBase):
         hotel_data = Hotel.query.filter_by(id=trip_hotel.hotel_id).first()
         if hotel_data is None:
             return None
-        stars = str(hotel_data.stars) if hotel_data.stars is not None else 'Not Specified'
+        stars = str(hotel_data.stars) if hotel_data.stars is not None else DEFAULT_STARS
         hotel = {
             "address": hotel_data.address,
             "currency": trip_hotel.currency,
@@ -701,7 +718,7 @@ class SQLPytheasManager(PytheasDBManagerBase):
             address = str(row_data['address_trans']) + ',' + str(row_data['district']) + ',' + \
                       str(row_data['city_trans']) + ',' + str(row_data['zip']) + ',' + \
                       str(row_data['country_trans'])
-            stars = str(row_data['class']) if row_data['class'] !=0 else 'Not Specified'
+            stars = str(row_data['class']) if row_data['class'] != 0 else DEFAULT_STARS
 
             hotels.append(
                 {
@@ -767,3 +784,5 @@ class SQLPytheasManager(PytheasDBManagerBase):
             out_str += '{}{}'.format(el, sep)
         return out_str[:-len(sep)]
 
+    def _get_string_param(self, param):
+        return "'" + str(param) + "'"
