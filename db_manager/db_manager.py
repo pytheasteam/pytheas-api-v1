@@ -504,15 +504,14 @@ class SQLPytheasManager(PytheasDBManagerBase):
             new_flights = []
             for trip in trips:
                 city_name = City.query.get(trip.city_id).name
+                hotel = self.get_trip_hotel(trip.id)
+                if hotel is None:
+                    continue
                 flight = self._get_trip_flight(trip.id)
                 if flight is None or flight == {}:
                     date_start = trip.start_date.strftime("%d/%m/%Y")
                     date_end = trip.end_date.strftime("%d/%m/%Y")
                     new_flights = self._get_flights('tel aviv', city_name, date_start, date_end, trip.people_number)
-
-                hotel = self.get_trip_hotel(trip.id)
-                if hotel is None:
-                    continue
                 attractions = self.get_trip_attraction(trip.id, hotel, city_name)
 
                 if flight is not None and flight != {} and hotel is not None:
