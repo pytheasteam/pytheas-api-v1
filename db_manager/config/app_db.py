@@ -1,6 +1,6 @@
 import os
 
-USERNAME = 'pytheas'
+USERNAME = 'root'
 PASSWORD = os.environ.get('PYTHEAS_DB_PASSWORD')
 HOST = 'pytheas-db.cofwkbzadfp1.eu-west-3.rds.amazonaws.com'
 DATABASE_NAME = 'pytheas'
