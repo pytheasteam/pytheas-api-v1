@@ -496,8 +496,10 @@ class SQLPytheasManager(PytheasDBManagerBase):
 
     def get_trips(self, username):
         try:
+            print(datetime.now())
             user_id = User.query.filter_by(username=username).first().id
             trips = Trip.query.filter_by(user_id=user_id)
+            print(datetime.now())
             all_trips = []
             new_flights = []
             for trip in trips:
