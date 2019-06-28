@@ -173,11 +173,30 @@ def explore_hotels():
     return response
 
 
-@app.route('/api/trip', methods=['GET', 'POST', 'PUT'])
+@app.route('/api/trip', methods=['GET', 'POST', 'PUT', 'DELETE'])
 @cross_origin()
 def trip():
     response = 500
-    if request.method != 'GET':
+    if request.method == 'GET':
+        try:
+            token = request.headers.get('Authorization')
+            username = jwt.decode(token, SERVER_SECRET_KEY, algorithms=['HS256'])['username']
+        except Exception as e:
+            return make_response(f'Cannot find token in headers: {e}', 400)
+        else:
+            response = db_manager.get_trips(username)
+    elif request.method == 'DELETE':
+        body = json.loads(request.data)
+        trip_id = int(body.get('id', -1))
+        try:
+            token = request.headers.get('Authorization')
+            username = jwt.decode(token, SERVER_SECRET_KEY, algorithms=['HS256'])['username']
+        except:
+            return make_response('Unauthorized', 401)
+        else:
+
+            response = db_manager.delete_trip(username=username, trip_id=trip_id)
+    else: #Post/ Put
         try:
             token = request.headers.get('Authorization')
             username = jwt.decode(token, SERVER_SECRET_KEY, algorithms=['HS256'])['username']
@@ -191,7 +210,7 @@ def trip():
             'start_date': body.get('start_date'),
             'end_date': body.get('end_date'),
             'days': int(body.get('days')),
-            'price':int(body.get('price')),
+            'price': int(body.get('price')),
             'currency': body.get('currency'),
             'people_number': int(body.get('people_number')),
             'pictures': [],
@@ -215,15 +234,6 @@ def trip():
                 hotel_rsrv_code=body.get('hotel_rsrv_code', None),
                 trip_data=trip_data
             )
-    else:
-        try:
-            token = request.headers.get('Authorization')
-            username = jwt.decode(token, SERVER_SECRET_KEY, algorithms=['HS256'])['username']
-        except Exception as e:
-            return make_response(f'Cannot find token in headers: {e}', 400)
-        else:
-            response = db_manager.get_trips(username)
-
     return make_response(response)
 
 
