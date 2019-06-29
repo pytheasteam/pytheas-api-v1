@@ -554,11 +554,12 @@ class SQLPytheasManager(PytheasDBManagerBase):
             budget = None if budget == "" else budget
             if budget:
                 budget = int(budget)
-            agent_response = requests.get(url=(AGENT_ENDPOINT+AGENT_ATTRACTION_GET), params={'profile_id': profile_id, 'city_id': city_id})
             fromdate = datetime.strptime(from_date, '%d/%m/%Y')
             todate = datetime.strptime(to_date, '%d/%m/%Y')
             days = (todate - fromdate).days
             estimated_requiired_attractions = days * 6
+            agent_response = requests.get(url=(AGENT_ENDPOINT+AGENT_ATTRACTION_GET),
+                                          params={'profile_id': profile_id, 'city_id': city_id, 'days': days})
 
             if agent_response.status_code is not 200:
                 return agent_response.content, agent_response.status_code
