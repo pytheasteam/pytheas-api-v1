@@ -100,7 +100,8 @@ def profiles(profile_id=None):
             response = db_manager.create_profile(
                 username=username,
                 profile_name=body.get('name'),
-                tags=body.get('tags')
+                tags=body.get('tags'),
+                image=body.get('image')
             )
         if request.method == 'DELETE':
             response = db_manager.delete_profile(

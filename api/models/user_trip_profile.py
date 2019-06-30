@@ -15,6 +15,9 @@ class UserProfile(db.Model):
     name = db.Column(
         db.String(50)
     )
+    image = db.Column(
+        db.String(100)
+    )
 
     user = db.relationship(User, backref=db.backref("user_profile", cascade="all, delete-orphan"))
 

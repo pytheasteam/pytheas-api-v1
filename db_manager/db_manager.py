@@ -108,15 +108,15 @@ class SQLPytheasManager(PytheasDBManagerBase):
             id=city_id
         )
 
-    def create_profile(self, username, profile_name, tags):
-
+    def create_profile(self, username, profile_name, tags, image):
         try:
             # get tags id from name
             user = User.query.filter_by(username=username).first()
             # create new profile
             new_profile = UserProfile(
                 user_id=user.id,
-                name=profile_name
+                name=profile_name,
+                image=image
             )
             self.db.session.add(new_profile)
             self.db.session.commit()
@@ -320,16 +320,15 @@ class SQLPytheasManager(PytheasDBManagerBase):
             return "Error deleting trip", 500
         return "success", 200
 
-
-
     #  GET FUNCTIONS
 
     def get_profile(self, username):
         try:
             user_id = User.query.filter_by(username=username).first().id
-            profiles = UserProfile.query.filter_by(user_id=user_id).with_entities(UserProfile.id, UserProfile.name).all()
+            profiles = UserProfile.query.filter_by(user_id=user_id).\
+                        with_entities(UserProfile.id, UserProfile.name, UserProfile.image).all()
             return jsonify({
-                        'profiles': [{'id': profile.id, 'name': profile.name} for profile in profiles]
+                        'profiles': [{'id': profile.id, 'name': profile.name, 'image': profile.image} for profile in profiles]
                    }), 200
         except Exception as e:
             return f"Error getting user's profiles: {str(e)}", 500
