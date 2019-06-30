@@ -652,7 +652,7 @@ class SQLPytheasManager(PytheasDBManagerBase):
             return str(e), 500
 
     def _get_flights(self, from_city, to_city, from_date, to_date, travelers, max_stop_overs=3):
-        max_returned_values = 3
+        max_returned_values = 2
         from_city_code = LocationMatcher.get_iata_for_city(from_city)
         to_city_code = LocationMatcher.get_iata_for_city(to_city)
 
