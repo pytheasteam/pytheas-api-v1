@@ -253,16 +253,16 @@ class SQLPytheasManager(PytheasDBManagerBase):
                 raise Exception("No trip found")
 
             trip_flight = TripFlight.query.filter_by(trip_id=trip_id).first()
-            trip.hotel_rsrv_code = hotel_rsrv_code if hotel_rsrv_code is not None and hotel_rsrv_code != '' else trip.hotel_rsrv
-            if trip.hotel_rsrv_code is not None and trip.hotel_rsrv_code != '':
-                trip.hotel_rsrv_code = "'" + trip.hotel_rsrv_code + "'"
-            if flight_rsrv_info is not None and flight_rsrv_info != {}:
+            if not trip.hotel_rsrv_code:
+                trip.hotel_rsrv_code = hotel_rsrv_code if hotel_rsrv_code else trip.hotel_rsrv
+            if flight_rsrv_info:
                 trip_flight = flight_rsrv_info
 
-            is_booked = False if trip_flight is None or trip_flight == {} or trip.hotel_rsrv_code is None else True
+            is_booked = False if not trip_flight or not trip.hotel_rsrv_code else True
 
             self._upsert_trip_flight(trip_id, flight_rsrv_info)
-            params = [trip_id, trip.hotel_rsrv_code, is_booked]
+            hotel_rsrv_code = f"'{trip.hotel_rsrv_code}'" if not trip.hotel_rsrv_code.startswith("'") else trip.hotel_rsrv_code
+            params = [trip_id, hotel_rsrv_code, is_booked]
             self._exec_procedure(TRIP_UPDATE_RSRV_SP, params)
             self.db.session.commit()
 
