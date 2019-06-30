@@ -173,9 +173,10 @@ def explore_hotels():
     return response
 
 
-@app.route('/api/trip', methods=['GET', 'POST', 'PUT', 'DELETE'])
+@app.route('/api/trip', methods=['GET', 'POST', 'PUT'])
+@app.route('/api/trip/<trip_id>', methods=['DELETE'])
 @cross_origin()
-def trip():
+def trip(trip_id=None):
     response = 500
     if request.method == 'GET':
         try:
@@ -186,8 +187,6 @@ def trip():
         else:
             response = db_manager.get_trips(username)
     elif request.method == 'DELETE':
-        body = json.loads(request.data)
-        trip_id = int(body.get('id', -1))
         try:
             token = request.headers.get('Authorization')
             username = jwt.decode(token, SERVER_SECRET_KEY, algorithms=['HS256'])['username']
